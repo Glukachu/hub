@@ -1,0 +1,931 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>--productivity hub--</title>
+<link rel="icon" type="image/svg+xml" href="favicon.svg" />
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Anton&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
+<style>
+  :root{
+    --bg:#0c0c0d; --panel:#161618; --panel2:#1d1d20; --line:#2a2a2e;
+    --txt:#f0f0ee; --muted:#7c7c84; --accent:#c8f92e; --accent-dim:rgba(200,249,46,.12);
+    --ok:#c8f92e; --warn:#ffb340; --info:#6fa8ff; --danger:#ff5f56;
+  }
+  *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+  html,body{background:var(--bg);color:var(--txt);font-family:"Inter",system-ui,sans-serif;
+    -webkit-font-smoothing:antialiased;min-height:100%}
+  body{padding:26px 26px 60px}
+  .head{font-family:"Anton",sans-serif;text-transform:uppercase;letter-spacing:.5px}
+
+  #bg{position:fixed;inset:0;z-index:0;pointer-events:none}
+  .app{max-width:1380px;margin:0 auto;position:relative;z-index:1}
+  #loginOverlay{position:fixed;inset:0;z-index:200;background:var(--bg);display:flex;align-items:center;justify-content:center}
+  #loginOverlay[hidden]{display:none}
+  .login-card{width:320px;max-width:88vw;background:var(--panel);border:1px solid var(--line);border-radius:18px;padding:28px}
+  .login-card .logo{font-family:"Anton";font-size:26px;text-transform:uppercase;letter-spacing:1px}
+  .login-card .logo b{color:var(--accent)}
+  .login-card .sub{font-size:12px;color:var(--muted);text-transform:uppercase;letter-spacing:2px;margin:4px 0 20px}
+  .login-card input{width:100%;background:var(--panel2);border:1px solid var(--line);color:var(--txt);
+    font-size:15px;font-family:"Inter";padding:11px 13px;border-radius:11px;margin-bottom:10px}
+  .login-card input:focus{outline:none;border-color:var(--accent)}
+  .login-err{color:var(--danger);font-size:12px;margin-top:8px;min-height:14px}
+
+  /* Topbar */
+  .top{display:flex;align-items:flex-end;justify-content:space-between;margin-bottom:22px;flex-wrap:wrap;gap:14px}
+  .brand{display:flex;align-items:baseline;gap:14px}
+  .brand .logo{font-family:"Anton";font-size:38px;letter-spacing:1px}
+  .brand .logo b{color:var(--accent)}
+  .brand .sub{font-size:12px;color:var(--muted);text-transform:uppercase;letter-spacing:3px}
+  .greet{text-align:right}
+  .greet .hi{font-size:20px;font-weight:600}
+  .greet .date{font-size:13px;color:var(--muted);margin-top:3px}
+  .greet .clock{font-family:"Anton";font-size:30px;color:var(--accent);line-height:1;margin-top:2px}
+
+  /* Grid */
+  .grid{display:grid;grid-template-columns:330px 1fr 350px;gap:20px;align-items:start}
+  @media(max-width:1120px){.grid{grid-template-columns:1fr}}
+  .col-left{display:flex;flex-direction:column;gap:20px;min-width:0}
+
+  .card{background:var(--panel);border:1px solid var(--line);border-radius:18px;padding:20px}
+  .card h2{font-family:"Anton";font-size:14px;letter-spacing:2px;text-transform:uppercase;
+    color:var(--muted);margin-bottom:16px;display:flex;align-items:center;gap:9px}
+  .card h2 .bar{width:18px;height:3px;background:var(--accent);border-radius:2px}
+
+  /* ---- Schlaf ---- */
+  .sleep-form .field{margin-bottom:14px}
+  .sleep-form label{display:block;font-size:12px;color:var(--muted);margin-bottom:6px;text-transform:uppercase;letter-spacing:.5px}
+  .sleep-form .timein{width:100%;background:var(--panel2);border:1px solid var(--line);
+    color:var(--txt);font-size:18px;font-family:"Inter";padding:11px 13px;border-radius:11px;letter-spacing:1px}
+  .sleep-form .timein:focus{outline:none;border-color:var(--accent)}
+  .stars{display:flex;gap:6px}
+  .star{font-size:30px;color:var(--line);cursor:pointer;line-height:1;transition:color .12s,transform .12s;user-select:none}
+  .star:hover{transform:scale(1.12)}
+  .star.on{color:var(--accent)}
+  .btn{background:var(--accent);color:#0b0b0b;border:none;font-family:"Inter";font-weight:700;
+    font-size:15px;padding:12px 16px;border-radius:11px;cursor:pointer;width:100%;letter-spacing:.3px}
+  .btn:hover{filter:brightness(1.06)}
+  .btn.ghost{background:transparent;color:var(--muted);border:1px solid var(--line);font-weight:600}
+  .btn.ghost:hover{color:var(--txt);border-color:var(--muted)}
+
+  .sleep-sum{text-align:center;padding:6px 0 2px}
+  .sleep-sum .dur{font-family:"Anton";font-size:52px;line-height:1;color:var(--accent)}
+  .sleep-sum .dur small{font-size:24px;color:var(--muted);margin-left:2px}
+  .sleep-sum .meta{font-size:13px;color:var(--muted);margin-top:10px}
+  .sleep-sum .stars-static{font-size:20px;color:var(--accent);letter-spacing:3px;margin-top:8px}
+  .sleep-hist{display:flex;gap:6px;align-items:flex-end;margin-top:24px;border-top:1px solid var(--line);padding-top:18px}
+  .sleep-hist .col{flex:1;cursor:pointer}
+  .sleep-hist .track{position:relative;height:46px}
+  .sleep-hist .b{position:absolute;left:0;right:0;bottom:0;margin:0 auto;width:100%;max-width:22px;
+    background:var(--accent-dim);border:1px solid var(--accent);border-radius:4px 4px 0 0}
+  .sleep-hist .b.bnone{background:transparent;border-color:var(--line)}
+  .sleep-hist .d{font-size:10px;color:var(--muted);text-align:center;margin-top:5px}
+  .editlink{display:block;text-align:center;margin-top:14px;font-size:12px;color:var(--muted);cursor:pointer}
+  .editlink:hover{color:var(--accent)}
+  .sleep-hist .col{cursor:pointer}
+  .sleep-hist .b.cur{box-shadow:0 0 0 2px var(--accent)}
+  .sleep-actions{display:flex;justify-content:space-between;gap:14px}
+  .sleep-actions .editlink{margin-top:14px}
+  /* Tag-Auswahl + Scrollräder */
+  .dayselect{width:100%;background:var(--panel2);border:1px solid var(--line);color:var(--txt);
+    font-size:15px;font-family:"Inter";padding:10px 12px;border-radius:11px;color-scheme:dark;cursor:pointer}
+  .wheelrow{margin-bottom:14px}
+  .wheelrow>label{display:block;font-size:12px;color:var(--muted);margin-bottom:6px;text-transform:uppercase;letter-spacing:.5px}
+  .wheels{display:flex;align-items:center;gap:8px}
+  .wheels b{font-size:22px;color:var(--muted)}
+  .wmount{flex:1}
+  .wheelwrap{position:relative}
+  .wheel{width:100%;height:108px;overflow-y:scroll;scroll-snap-type:y mandatory;
+    background:var(--panel2);border:1px solid var(--line);border-radius:12px;scrollbar-width:none}
+  .wheel::-webkit-scrollbar{display:none}
+  .wheel .pad{height:36px}
+  .wheel .it{height:36px;line-height:36px;text-align:center;scroll-snap-align:center;
+    font-size:19px;color:var(--muted);transition:color .12s,font-size .12s}
+  .wheel .it.sel{color:var(--accent);font-weight:700;font-size:22px}
+  .wheelband{position:absolute;left:0;right:0;top:36px;height:36px;pointer-events:none;
+    border-top:1px solid rgba(200,249,46,.5);border-bottom:1px solid rgba(200,249,46,.5)}
+  .dur-preview{text-align:center;font-size:18px;font-weight:700;color:var(--accent);margin:2px 0 14px}
+  .dur-preview small{font-size:13px;color:var(--muted);font-weight:600}
+  .dur-preview .cross{display:inline-block;font-size:11px;font-weight:600;color:var(--muted);
+    text-transform:uppercase;letter-spacing:.5px;border:1px solid var(--line);padding:2px 7px;border-radius:6px;margin-left:6px;vertical-align:middle}
+
+  /* ---- Tasks ---- */
+  .tasks-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:16px}
+  .tasks-head h2{margin-bottom:0}
+  .add-btn{width:34px;height:34px;border-radius:10px;background:var(--accent-dim);border:1px solid var(--accent);
+    color:var(--accent);font-size:22px;line-height:1;cursor:pointer;display:flex;align-items:center;justify-content:center}
+  .add-btn:hover{background:var(--accent);color:#0b0b0b}
+  .add-row{display:none;gap:8px;margin-bottom:14px}
+  .add-row.show{display:flex}
+  .add-row input{flex:1;background:var(--panel2);border:1px solid var(--line);color:var(--txt);
+    font-size:15px;font-family:"Inter";padding:11px 13px;border-radius:11px}
+  .add-row input:focus{outline:none;border-color:var(--accent)}
+  .add-row button{background:var(--accent);color:#0b0b0b;border:none;font-weight:700;padding:0 16px;border-radius:11px;cursor:pointer}
+
+  .tlist{display:flex;flex-direction:column;gap:9px;min-height:90px}
+  .task{display:flex;align-items:flex-start;gap:12px;background:var(--panel2);border:1px solid var(--line);
+    border-left:3px solid var(--line);border-radius:12px;padding:13px 14px;transition:border-color .15s}
+  .task:hover{border-left-color:var(--accent)}
+  .task[draggable="true"]{cursor:grab}
+  .task.dragging{opacity:.4;border-color:var(--accent);border-left-color:var(--accent)}
+  .task .box{width:22px;height:22px;border-radius:7px;border:2px solid var(--muted);cursor:pointer;flex:none;
+    margin-top:1px;display:flex;align-items:center;justify-content:center;transition:all .15s}
+  .task .box:hover{border-color:var(--accent)}
+  .task .txt{flex:1;font-size:15px;line-height:1.4}
+  .task .src{font-size:10px;text-transform:uppercase;letter-spacing:.5px;color:var(--muted);
+    border:1px solid var(--line);padding:2px 7px;border-radius:6px;margin-top:2px;flex:none}
+  .task .src.inbox{color:var(--info);border-color:var(--info)}
+  .task .del{color:var(--line);cursor:pointer;font-size:18px;line-height:1;flex:none;margin-top:1px}
+  .task:hover .del{color:var(--muted)}
+  .task .del:hover{color:var(--danger)}
+  .task.done{opacity:.45}
+  .task.done .box{background:var(--accent);border-color:var(--accent)}
+  .task.done .box::after{content:"✓";color:#0b0b0b;font-size:14px;font-weight:800}
+  .task.done .txt{text-decoration:line-through;color:var(--muted)}
+  .empty{color:var(--muted);font-size:14px;text-align:center;padding:26px 10px;line-height:1.5}
+  .done-sep{font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:1px;margin:18px 0 4px;cursor:pointer}
+  .done-sep:hover{color:var(--txt)}
+  /* Fokus-Timer */
+  .focusbar{display:flex;align-items:center;gap:14px;background:var(--accent-dim);
+    border:1px solid var(--accent);border-radius:14px;padding:11px 14px;margin-bottom:14px}
+  .focusbar[hidden]{display:none}
+  .fb-left{flex:1;min-width:0}
+  .fb-label{font-size:10px;text-transform:uppercase;letter-spacing:1.5px;color:var(--accent);
+    font-weight:700;margin-bottom:4px;display:flex;align-items:center;gap:7px}
+  .fb-label .pulse{width:7px;height:7px;border-radius:50%;background:var(--accent)}
+  .focusbar.running .fb-label .pulse{animation:fbpulse 1.4s ease-in-out infinite}
+  @keyframes fbpulse{0%,100%{opacity:1;transform:scale(1)}50%{opacity:.25;transform:scale(.7)}}
+  .fb-task{font-size:14px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .fb-time-wrap{text-align:right}
+  .fb-time{font-family:"Anton";font-size:34px;color:var(--accent);line-height:1;letter-spacing:1px;font-variant-numeric:tabular-nums}
+  .fb-total{font-size:11px;color:var(--muted);margin-top:3px;white-space:nowrap}
+  .fb-ctrl{display:flex;gap:8px}
+  .sleep-hist.static .col{cursor:default}
+  .fb-btn{width:40px;height:40px;border-radius:11px;border:1px solid var(--line);background:var(--panel2);
+    color:var(--txt);font-size:16px;cursor:pointer;display:flex;align-items:center;justify-content:center}
+  .fb-btn:hover{border-color:var(--accent);color:var(--accent)}
+  .fb-btn.stop:hover{border-color:var(--danger);color:var(--danger)}
+  .task .play{width:27px;height:27px;border-radius:8px;border:1px solid var(--line);color:var(--muted);
+    cursor:pointer;flex:none;display:flex;align-items:center;justify-content:center;font-size:11px;margin-top:-1px}
+  .task .play:hover{border-color:var(--accent);color:var(--accent)}
+  .task.focusing{border-color:var(--accent);border-left-color:var(--accent)}
+  .task.focusing .play{background:var(--accent);color:#0b0b0b;border-color:var(--accent)}
+  .task .spent{font-size:11px;color:var(--accent);border:1px solid var(--line);padding:2px 8px;
+    border-radius:6px;flex:none;margin-top:1px;white-space:nowrap;font-weight:600}
+  .focus-today{font-size:12px;color:var(--muted);text-align:center;margin-top:16px;padding-top:14px;border-top:1px solid var(--line)}
+  .focus-today[hidden]{display:none}
+  .focus-today b{color:var(--accent);font-weight:700}
+
+  /* ---- Junia ---- */
+  .javatar{width:24px;height:24px;border-radius:50%;object-fit:cover;border:1px solid var(--line)}
+  .junia-msg{font-size:14px;line-height:1.55;margin-bottom:16px;white-space:pre-line}
+  .jrow{display:flex;align-items:center;gap:10px;background:var(--panel2);border-radius:10px;
+    padding:8px 11px;margin-bottom:7px;border-left:3px solid var(--line)}
+  .jrow .h{font-weight:700;color:var(--muted);width:22px;text-align:center}
+  .jrow .s{flex:1;font-size:14px}
+  .jrow .t{font-size:10px;text-transform:uppercase;letter-spacing:.5px;padding:2px 7px;border-radius:6px;background:var(--line);color:var(--muted)}
+  .jrow.s-frei{border-left-color:var(--ok)} .jrow.s-frei .t{background:var(--ok);color:#0b0b0b}
+  .jrow.s-vertr{border-left-color:var(--warn)} .jrow.s-vertr .t{background:var(--warn);color:#0b0b0b}
+  .jrow.s-eva{border-left-color:var(--info)} .jrow.s-eva .t{background:var(--info);color:#0b0b0b}
+  .jquote{margin-top:18px;border-top:1px solid var(--line);padding-top:14px}
+  .jquote .q{font-size:15px;font-style:italic;line-height:1.45}
+  .jquote .a{font-size:12px;color:var(--muted);margin-top:7px;text-align:right}
+  .jstatus{font-size:11px;color:var(--muted);margin-top:14px;display:flex;align-items:center;gap:7px}
+  .jstatus .dot{width:8px;height:8px;border-radius:50%;background:var(--accent)}
+  .jstatus .dot.off{background:var(--danger)}
+  /* ===== Hub-Buddy (kleine Spielerei unten rechts) ===== */
+  .buddy{position:fixed;right:26px;bottom:20px;z-index:50;width:54px;height:60px;cursor:pointer;user-select:none}
+  .buddy .body{position:absolute;left:6px;bottom:6px;width:42px;height:38px;background:var(--accent);
+    border-radius:50% 50% 46% 46%/58% 58% 42% 42%;animation:buddyBob 2.6s ease-in-out infinite;transform-origin:bottom}
+  .buddy .antenna{position:absolute;left:20px;top:-9px;width:2px;height:10px;background:var(--accent)}
+  .buddy .antenna::after{content:"";position:absolute;top:-5px;left:-2px;width:6px;height:6px;border-radius:50%;
+    background:var(--accent);box-shadow:0 0 7px var(--accent)}
+  .buddy .eye{position:absolute;top:13px;width:7px;height:8px;transition:transform .12s}
+  .buddy .eye.l{left:11px} .buddy .eye.r{left:24px}
+  .buddy .pupil{display:block;width:100%;height:100%;border-radius:50%;background:#0b0b0b;transition:transform .12s}
+  .buddy .mouth{position:absolute;left:50%;top:25px;margin-left:-5px;width:10px;height:5px;
+    border-bottom:2.5px solid #0b0b0b;border-radius:0 0 9px 9px;transition:all .15s}
+  /* Mimik / Stimmungen */
+  .buddy.mood-focus .eye{transform:scaleY(.55) translateY(2px)}
+  .buddy.mood-focus .mouth{width:8px;height:0;margin-left:-4px}
+  .buddy.mood-happy .eye{transform:scaleY(.3)}
+  .buddy.mood-happy .mouth{width:15px;height:8px;margin-left:-7.5px}
+  .buddy.mood-surprised .eye{transform:scale(1.3)}
+  .buddy.mood-surprised .mouth{width:7px;height:7px;border:2px solid #0b0b0b;border-radius:50%;margin-left:-3.5px}
+  .buddy.mood-sleepy .eye{transform:scaleY(.4)}
+  .buddy.mood-sleepy .mouth{width:5px;height:3px;margin-left:-2.5px}
+  .buddy.blink .eye{transform:scaleY(.1)}
+  /* Tricks (erweiterbar) */
+  .buddy.tr-spin .body{animation:buddySpin .7s ease}
+  @keyframes buddySpin{to{transform:rotate(360deg)}}
+  .buddy.tr-wiggle .body{animation:buddyWiggle .55s ease}
+  @keyframes buddyWiggle{0%,100%{transform:rotate(0)}25%{transform:rotate(-10deg)}75%{transform:rotate(10deg)}}
+  .buddy.tr-stretch .body{animation:buddyStretch .6s ease}
+  @keyframes buddyStretch{0%,100%{transform:scaleY(1) scaleX(1)}50%{transform:scaleY(1.18) scaleX(.92)}}
+  /* ---- Roaming: Rig spiegelt die Laufrichtung ---- */
+  .buddy .rig{position:absolute;inset:0;transition:transform .18s ease}
+  .buddy.face-left .rig{transform:scaleX(-1)}
+  /* ---- Props (Laptop / Dose), liegen vor ihm ---- */
+  .buddy .prop{position:absolute;bottom:0;opacity:0;transition:opacity .25s}
+  .buddy.act-laptop .laptop,.buddy.act-can .can{opacity:1}
+  .laptop{left:16px;width:22px;height:15px}
+  .laptop .screen{position:absolute;bottom:3px;left:3px;width:16px;height:11px;background:#22252b;
+    border:1px solid #3b4049;border-radius:2px 2px 0 0}
+  .laptop .screen::after{content:"";position:absolute;inset:2px;border-radius:1px;
+    background:linear-gradient(135deg,rgba(200,249,46,.55),rgba(120,180,255,.4));animation:scrFlick 1.6s steps(2,end) infinite}
+  .laptop .base{position:absolute;bottom:0;left:0;width:22px;height:4px;background:#33373e;border-radius:1px 1px 3px 3px}
+  @keyframes scrFlick{0%,100%{opacity:.72}50%{opacity:1}}
+  .can{left:22px;width:10px;height:16px;transition:transform .4s ease,opacity .25s}
+  .can .can-body{position:absolute;bottom:0;left:0;width:10px;height:14px;border-radius:2px;
+    background:linear-gradient(#e2e2e8,#a6a6ae);border:1px solid #87878f}
+  .can .can-body::after{content:"";position:absolute;left:-1px;right:-1px;top:5px;height:4px;background:var(--accent)}
+  .can .can-top{position:absolute;top:0;left:1px;width:8px;height:3px;background:#9a9aa2;border-radius:2px 2px 0 0}
+  /* ---- Sitzen + Tippen ---- */
+  .buddy.sit .body{animation:none;height:34px;bottom:3px}
+  .buddy.sit .foot{bottom:1px}
+  .buddy.typing .body{animation:buddyType .24s ease-in-out infinite}
+  @keyframes buddyType{0%,100%{transform:translateY(0) rotate(-3deg)}50%{transform:translateY(-1.5px) rotate(-3deg)}}
+  /* ---- Trinken + Energy-Boost ---- */
+  .buddy.drinking .can{transform:translate(-15px,-15px) rotate(-28deg)}
+  .buddy.drinking .body{animation:none;transform:rotate(-13deg)}
+  .buddy.hyper .body{animation:hyperShake .07s infinite}
+  @keyframes hyperShake{0%{transform:translate(0,0)}25%{transform:translate(-1px,-1px)}50%{transform:translate(1px,0)}75%{transform:translate(-1px,1px)}100%{transform:translate(0,0)}}
+  /* ---- Trampolin-Hüpfen (+ Salto) ---- */
+  .buddy .trampoline{position:absolute;left:7px;bottom:-2px;width:40px;height:9px;opacity:0;transition:opacity .2s}
+  .buddy.act-tramp .trampoline{opacity:1}
+  .trampoline .mat{position:absolute;top:0;left:0;width:40px;height:5px;border-radius:50%;background:#2b2b32;border:1px solid #4a4a54}
+  .trampoline .leg{position:absolute;bottom:0;width:2px;height:5px;background:#4a4a54;border-radius:1px}
+  .trampoline .leg.l{left:6px} .trampoline .leg.r{right:6px}
+  .buddy.tramp-bounce .rig{animation:trampB 2.5s ease-in-out}
+  .buddy.tramp-salto .rig{animation:trampS 2.7s ease-in-out}
+  @keyframes trampB{0%{transform:translateY(0)}14%{transform:translateY(-26px)}28%{transform:translateY(0)}42%{transform:translateY(-20px)}56%{transform:translateY(0)}70%{transform:translateY(-13px)}85%{transform:translateY(0)}100%{transform:translateY(0)}}
+  @keyframes trampS{0%{transform:translateY(0) rotate(0)}18%{transform:translateY(-32px) rotate(180deg)}36%{transform:translateY(0) rotate(360deg)}52%{transform:translateY(-20px) rotate(360deg)}68%{transform:translateY(0) rotate(360deg)}84%{transform:translateY(-12px) rotate(360deg)}100%{transform:translateY(0) rotate(360deg)}}
+  .buddy .foot{position:absolute;bottom:0;width:9px;height:5px;border-radius:50%;background:var(--accent)}
+  .buddy .foot.l{left:14px} .buddy .foot.r{left:31px}
+  @keyframes buddyBob{0%,100%{transform:translateY(0) scaleY(1)}50%{transform:translateY(-4px) scaleY(1.03)}}
+  .buddy.run .body{animation-duration:.5s}
+  .buddy.run .foot{animation:buddyStep .3s ease-in-out infinite}
+  .buddy.run .foot.r{animation-delay:.15s}
+  @keyframes buddyStep{0%,100%{transform:translateY(0)}50%{transform:translateY(-3px)}}
+  .buddy.jump .rig{animation:buddyJump .5s ease}
+  @keyframes buddyJump{0%,100%{transform:translateY(0)}40%{transform:translateY(-15px)}}
+  .buddy .bubble{position:absolute;right:4px;bottom:62px;background:var(--panel);border:1px solid var(--line);
+    color:var(--txt);font-size:12px;font-weight:500;padding:6px 10px;border-radius:11px;white-space:nowrap;
+    opacity:0;transform:translateY(5px);transition:opacity .25s,transform .25s;pointer-events:none}
+  .buddy .bubble.show{opacity:1;transform:translateY(0)}
+</style>
+</head>
+<body>
+<canvas id="bg"></canvas>
+<div id="loginOverlay">
+  <div class="login-card">
+    <div class="logo">PRODUCTIVITY <b>HUB</b></div>
+    <div class="sub">Anmelden</div>
+    <input type="email" id="loginEmail" placeholder="E-Mail" autocomplete="username">
+    <input type="password" id="loginPw" placeholder="Passwort" autocomplete="current-password">
+    <button class="btn" id="loginBtn">Einloggen</button>
+    <div class="login-err" id="loginErr"></div>
+  </div>
+</div>
+<div class="buddy" id="buddy">
+  <div class="bubble" id="buddyBubble"></div>
+  <div class="trampoline"><span class="mat"></span><span class="leg l"></span><span class="leg r"></span></div>
+  <div class="rig">
+    <div class="foot l"></div><div class="foot r"></div>
+    <div class="body">
+      <span class="antenna"></span>
+      <span class="eye l"><span class="pupil"></span></span>
+      <span class="eye r"><span class="pupil"></span></span>
+      <span class="mouth"></span>
+    </div>
+    <div class="prop laptop"><span class="screen"></span><span class="base"></span></div>
+    <div class="prop can"><span class="can-body"></span><span class="can-top"></span></div>
+  </div>
+</div>
+<div class="app">
+
+  <div class="top">
+    <div class="brand">
+      <span class="logo">PRODUCTIVITY <b>HUB</b></span>
+    </div>
+    <div class="greet">
+      <div class="hi" id="hi">—</div>
+      <div class="date" id="date">—</div>
+      <div class="clock" id="clock">--:--</div>
+    </div>
+  </div>
+
+  <div class="grid">
+
+    <!-- ============ LINKE SPALTE: SCHLAF + FOKUS ============ -->
+    <div class="col-left">
+      <div class="card" id="sleepCard">
+        <h2><span class="bar"></span>Schlaf</h2>
+        <div id="sleepBody"><!-- gefüllt per JS --></div>
+      </div>
+      <div class="card" id="focusCard">
+        <h2><span class="bar"></span>Fokus</h2>
+        <div class="sleep-sum">
+          <div class="dur" id="focusTodayBig">0<small>m</small></div>
+          <div class="meta">heute fokussiert</div>
+        </div>
+        <div class="sleep-hist static" id="focusHist"></div>
+      </div>
+    </div>
+
+    <!-- ============ HARD TASKS ============ -->
+    <div class="card">
+      <div class="tasks-head">
+        <h2><span class="bar"></span>Hard Tasks</h2>
+        <button class="add-btn" id="addBtn" title="Task hinzufügen">+</button>
+      </div>
+      <div class="add-row" id="addRow">
+        <input id="addInput" placeholder="Was ist der konkrete nächste Move?" />
+        <button id="addSave">Add</button>
+      </div>
+      <div class="focusbar" id="focusbar" hidden>
+        <div class="fb-left">
+          <div class="fb-label"><span class="pulse"></span>Fokus</div>
+          <div class="fb-task" id="fbTask">—</div>
+        </div>
+        <div class="fb-time-wrap">
+          <div class="fb-time" id="fbTime">0:00</div>
+          <div class="fb-total" id="fbTotal">gesamt 0m</div>
+        </div>
+        <div class="fb-ctrl">
+          <button class="fb-btn" id="fbToggle" title="Pause / Weiter">⏸</button>
+          <button class="fb-btn stop" id="fbStop" title="Beenden">⏹</button>
+        </div>
+      </div>
+      <div class="tlist" id="tlist"></div>
+    </div>
+
+    <!-- ============ JUNIA ============ -->
+    <div class="card">
+      <h2><span class="bar"></span><img class="javatar" src="data/junia_avatar.jpg" alt="" onerror="this.style.display='none'">Junia</h2>
+      <div class="junia-msg" id="jmsg">verbinde…</div>
+      <div id="jrows"></div>
+      <div class="jquote" id="jquoteWrap" style="display:none">
+        <div class="q" id="jquote"></div>
+        <div class="a" id="jauthor"></div>
+      </div>
+      <div class="jstatus"><span class="dot off" id="jdot"></span><span id="jupdated">keine junia.json</span></div>
+    </div>
+
+  </div>
+</div>
+
+<script>
+/* ================= Helpers ================= */
+const $ = id => document.getElementById(id);
+const pad = n => String(n).padStart(2,"0");
+const DAYS = ["Sonntag","Montag","Dienstag","Mittwoch","Donnerstag","Freitag","Samstag"];
+const MONTHS = ["Januar","Februar","März","April","Mai","Juni","Juli","August","September","Oktober","November","Dezember"];
+const todayKey = (d=new Date()) => `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}`;
+
+/* ================= Topbar / Uhr ================= */
+function tick(){
+  const n = new Date();
+  $("clock").innerHTML = pad(n.getHours())+":"+pad(n.getMinutes())+'<span style="font-size:18px;color:var(--muted)">:'+pad(n.getSeconds())+'</span>';
+  $("date").textContent = DAYS[n.getDay()]+", "+n.getDate()+". "+MONTHS[n.getMonth()]+" "+n.getFullYear();
+  const h = n.getHours();
+  $("hi").textContent = (h<5?"Noch wach?":h<11?"Morgen, Julian.":h<17?"Servus, Julian.":h<22?"Abend, Julian.":"Spät, Julian.");
+}
+setInterval(tick,1000); tick();
+
+/* ================= SCHLAF ================= */
+/* ===== Firebase (Cloud-Sync) ===== */
+const firebaseConfig = {
+  apiKey: "AIzaSyDADB1XCP5KpgAXiAUYsiTrrCXj6DKr0tY",
+  authDomain: "productivity-hub-jb.firebaseapp.com",
+  projectId: "productivity-hub-jb",
+  storageBucket: "productivity-hub-jb.firebasestorage.app",
+  messagingSenderId: "990227614433",
+  appId: "1:990227614433:web:52d9ba413f33b672ce05a0"
+};
+firebase.initializeApp(firebaseConfig);
+const db = firebase.firestore();
+db.enablePersistence({synchronizeTabs:true}).catch(()=>{});   // Offline-Cache
+const STATE_REF = db.collection("state").doc("main");
+const CACHE = { tasks:[], sleep:{}, focus:null, daily:{}, imported:[] };
+function pushField(field, value){
+  STATE_REF.set({ [field]: (value===undefined?null:value) }, { merge:true }).catch(e=>console.warn("fb push", field, e));
+}
+function applyState(d){
+  d=d||{};
+  CACHE.tasks=d.tasks||[]; CACHE.sleep=d.sleep||{}; CACHE.focus=d.focus||null; CACHE.daily=d.daily||{}; CACHE.imported=d.imported||[];
+  renderSleep(); renderTasks(); renderFocus();
+}
+let fbStarted=false, syncStarted=false;
+function startSync(){
+  if(syncStarted) return; syncStarted=true;
+  STATE_REF.onSnapshot(snap=>{ applyState(snap.data()); if(!fbStarted){ fbStarted=true; importInbox(); } },
+    err=>console.warn("fb snapshot", err));
+}
+/* ===== Auth-Gate (Login davor) ===== */
+const auth = firebase.auth();
+auth.setPersistence(firebase.auth.Auth.Persistence.LOCAL).catch(()=>{});
+auth.onAuthStateChanged(u=>{
+  const ov=document.getElementById("loginOverlay");
+  if(u){ if(ov) ov.hidden=true; startSync(); }
+  else { if(ov) ov.hidden=false; }
+});
+function hubLogin(){
+  const email=$("loginEmail").value.trim(), pw=$("loginPw").value, err=$("loginErr");
+  err.textContent="";
+  if(!email||!pw){ err.textContent="E-Mail und Passwort eingeben."; return; }
+  $("loginBtn").disabled=true;
+  auth.signInWithEmailAndPassword(email,pw)
+    .catch(e=>{
+      if(["auth/user-not-found","auth/invalid-credential","auth/invalid-login-credentials","auth/wrong-password"].includes(e.code)){
+        return auth.createUserWithEmailAndPassword(email,pw)   // erstes Mal -> Konto anlegen
+          .catch(e2=>{ err.textContent = e2.code==="auth/email-already-in-use" ? "Falsches Passwort." : (e2.message||"Fehler"); });
+      }
+      err.textContent=e.message||"Fehler";
+    })
+    .finally(()=>{ $("loginBtn").disabled=false; });
+}
+$("loginBtn").onclick=hubLogin;
+$("loginPw").addEventListener("keydown",e=>{ if(e.key==="Enter") hubLogin(); });
+
+/* Schlaf-Daten (Cache, Sync via Firebase) */
+const loadSleep = () => CACHE.sleep;
+const saveSleep = o => { CACHE.sleep=o; pushField("sleep", o); };
+
+function sleepDuration(bed, up){
+  // bed/up = "HH:MM"; Bett meist abends, Aufstehen nächster Morgen
+  const [bh,bm] = bed.split(":").map(Number);
+  const [uh,um] = up.split(":").map(Number);
+  let mins = (uh*60+um) - (bh*60+bm);
+  if(mins <= 0) mins += 24*60;          // über Mitternacht
+  return mins;
+}
+const fmtDur = m => `${Math.floor(m/60)}<small>h</small> ${m%60}<small>m</small>`;
+
+/* 24h-Zeit-Eingabe: Live-Format "HH:MM" + Validierung (kein AM/PM) */
+/* Scrollrad-Picker: scroll-snap-Spalte, liest den zentrierten Wert. */
+function makeWheel(values, initial, onChange){
+  const wrap=document.createElement("div"); wrap.className="wheelwrap";
+  const w=document.createElement("div"); w.className="wheel";
+  w.innerHTML='<div class="pad"></div>'+values.map(v=>`<div class="it">${v}</div>`).join("")+'<div class="pad"></div>';
+  const band=document.createElement("div"); band.className="wheelband";
+  wrap.appendChild(w); wrap.appendChild(band);
+  let idx=Math.max(0, values.indexOf(initial));
+  const items=()=>w.querySelectorAll(".it");
+  function mark(){
+    const i=Math.min(values.length-1, Math.max(0, Math.round(w.scrollTop/36)));
+    if(i!==idx && onChange) requestAnimationFrame(onChange);
+    idx=i; items().forEach((el,k)=>el.classList.toggle("sel",k===i));
+  }
+  w.addEventListener("scroll",()=>requestAnimationFrame(mark));
+  // exakt EIN Schritt pro Tick (Scroll + Pfeiltasten) statt native Übersprünge
+  function go(to){
+    idx=Math.max(0, Math.min(values.length-1, to));
+    w.scrollTo({top:idx*36, behavior:"smooth"});
+    items().forEach((el,k)=>el.classList.toggle("sel",k===idx));
+    if(onChange) requestAnimationFrame(onChange);
+  }
+  let acc=0;
+  w.addEventListener("wheel",e=>{
+    e.preventDefault();
+    acc+=e.deltaY;
+    if(Math.abs(acc)>=30){ go(idx + (acc>0?1:-1)); acc=0; }
+  },{passive:false});
+  w.tabIndex=0;
+  w.addEventListener("keydown",e=>{
+    if(e.key==="ArrowUp"){ e.preventDefault(); go(idx-1); }
+    else if(e.key==="ArrowDown"){ e.preventDefault(); go(idx+1); }
+  });
+  setTimeout(()=>{ w.scrollTop=idx*36; mark(); },0);
+  wrap._get=()=>values[idx];
+  return wrap;
+}
+
+let selDate = todayKey();   // Tag des Aufstehens, den wir gerade eintragen/ansehen
+let pendingMood = 0;
+const HHv=[...Array(24)].map((_,i)=>pad(i));
+const MMv=[...Array(60)].map((_,i)=>pad(i));
+
+function dayLabel(k){
+  if(k===todayKey()) return "Heute";
+  const y=new Date(); y.setDate(y.getDate()-1);
+  if(k===todayKey(y)) return "Gestern";
+  const d=new Date(k+"T12:00");
+  return ["So","Mo","Di","Mi","Do","Fr","Sa"][d.getDay()]+" "+d.getDate()+"."+(d.getMonth()+1)+".";
+}
+
+function renderSleep(force){
+  const t=loadSleep()[selDate];
+  if(t && !force) renderSleepSummary(t); else renderSleepForm(t);
+}
+
+function renderSleepForm(prefill){
+  pendingMood = prefill ? prefill.mood : 0;
+  let opts="";
+  for(let i=0;i<10;i++){ const d=new Date(); d.setDate(d.getDate()-i); const k=todayKey(d);
+    opts+=`<option value="${k}" ${k===selDate?"selected":""}>${dayLabel(k)}</option>`; }
+  $("sleepBody").innerHTML=`
+    <div class="sleep-form">
+      <div class="field">
+        <label>Tag des Aufstehens</label>
+        <select class="dayselect" id="sDay">${opts}</select>
+      </div>
+      <div class="wheelrow"><label>Ins Bett</label>
+        <div class="wheels"><div class="wmount" id="wBedH"></div><b>:</b><div class="wmount" id="wBedM"></div></div></div>
+      <div class="wheelrow"><label>Aufgestanden</label>
+        <div class="wheels"><div class="wmount" id="wUpH"></div><b>:</b><div class="wmount" id="wUpM"></div></div></div>
+      <div class="dur-preview" id="durPrev">—</div>
+      <div class="field"><label>Wie geht's dir? (0–5)</label><div class="stars" id="stars"></div></div>
+      <button class="btn" id="sSave">Eintragen</button>
+    </div>`;
+  const bed=(prefill?prefill.bed:"23:00").split(":"), up=(prefill?prefill.up:"07:00").split(":");
+  const getBed=()=>wBH._get()+":"+wBM._get(), getUp=()=>wUH._get()+":"+wUM._get();
+  const upd=()=>{
+    const bv=getBed(), uv=getUp(), d=sleepDuration(bv,uv);
+    const cross = (parseInt(uv.slice(0,2))*60+parseInt(uv.slice(3))) <= (parseInt(bv.slice(0,2))*60+parseInt(bv.slice(3)));
+    $("durPrev").innerHTML = `≈ ${fmtDur(d)}` + (cross?` <span class="cross">über Mitternacht</span>`:``);
+  };
+  const wBH=makeWheel(HHv,bed[0],upd), wBM=makeWheel(MMv,bed[1],upd), wUH=makeWheel(HHv,up[0],upd), wUM=makeWheel(MMv,up[1],upd);
+  $("wBedH").appendChild(wBH); $("wBedM").appendChild(wBM); $("wUpH").appendChild(wUH); $("wUpM").appendChild(wUM);
+  setTimeout(upd,10);
+  const sc=$("stars");
+  for(let i=1;i<=5;i++){
+    const s=document.createElement("span");
+    s.className="star"+(i<=pendingMood?" on":""); s.textContent="★";
+    s.onclick=()=>{ pendingMood=i; [...sc.children].forEach((c,idx)=>c.classList.toggle("on",idx<i)); };
+    sc.appendChild(s);
+  }
+  $("sDay").onchange=()=>{ selDate=$("sDay").value; renderSleep(true); };
+  $("sSave").onclick=()=>{
+    const bedV=wBH._get()+":"+wBM._get(), upV=wUH._get()+":"+wUM._get();
+    const log=loadSleep();
+    log[selDate]={bed:bedV,up:upV,mood:pendingMood,dur:sleepDuration(bedV,upV)};
+    saveSleep(log); selDate=todayKey(); renderSleep();
+  };
+}
+
+function renderSleepSummary(t){
+  const log=loadSleep();
+  const stars="★".repeat(t.mood)+"☆".repeat(5-t.mood);
+  let hist=""; const maxDur=Math.max(540, ...Object.values(log).map(e=>e.dur||0));
+  for(let i=6;i>=0;i--){
+    const d=new Date(); d.setDate(d.getDate()-i); const k=todayKey(d); const e=log[k];
+    const hpx = e ? Math.max(4, Math.round((e.dur/maxDur)*46)) : 3;
+    hist+=`<div class="col" data-k="${k}" title="${e?(Math.floor(e.dur/60)+'h '+(e.dur%60)+'m'):'nachtragen'}">`
+        +`<div class="track"><div class="b ${e?'':'bnone'} ${k===selDate?'cur':''}" style="height:${hpx}px"></div></div>`
+        +`<div class="d">${["So","Mo","Di","Mi","Do","Fr","Sa"][d.getDay()]}</div></div>`;
+  }
+  $("sleepBody").innerHTML=`
+    <div class="sleep-sum">
+      <div class="dur">${fmtDur(t.dur)}</div>
+      <div class="stars-static">${stars}</div>
+      <div class="meta">${selDate===todayKey()?"":dayLabel(selDate)+" · "}${t.bed} → ${t.up} Uhr</div>
+    </div>
+    <div class="sleep-hist">${hist}</div>
+    <div class="sleep-actions">
+      <span class="editlink" id="editSleep">ändern</span>
+      <span class="editlink" id="addOther">+ Tag nachtragen</span>
+    </div>`;
+  $("sleepBody").querySelectorAll("[data-k]").forEach(el=>el.onclick=()=>{ selDate=el.dataset.k; renderSleep(); });
+  $("editSleep").onclick=()=>renderSleepForm(t);
+  $("addOther").onclick=()=>renderSleepForm(loadSleep()[selDate]);
+}
+renderSleep();
+
+/* ================= TASKS ================= */
+const loadTasks = () => CACHE.tasks;
+const saveTasks = a => { CACHE.tasks=a; pushField("tasks", a); };
+let showDone=false;
+
+function renderTasks(){
+  const tasks=loadTasks();
+  const active=tasks.filter(t=>!t.done), done=tasks.filter(t=>t.done);
+  let html="";
+  if(active.length===0 && done.length===0){
+    html=`<div class="empty">Noch keine Hard Tasks.<br>Tippe <b style="color:var(--accent)">+</b> für deinen ersten konkreten Move —<br>oder lass sie später importieren.</div>`;
+  } else {
+    html=active.map(taskHtml).join("");
+    if(done.length){
+      html+=`<div class="done-sep" id="doneSep">${showDone?"▾":"▸"} ${done.length} erledigt</div>`;
+      if(showDone) html+=done.map(taskHtml).join("");
+    }
+  }
+  $("tlist").innerHTML=html;
+  tasks.forEach(t=>{
+    const el=document.querySelector(`[data-id="${t.id}"]`); if(!el) return;
+    el.querySelector(".box").onclick=()=>toggle(t.id);
+    el.querySelector(".del").onclick=()=>del(t.id);
+    const play=el.querySelector(".play"); if(play) play.onclick=e=>{e.stopPropagation();startFocus(t.id);};
+  });
+  const fc=loadFocus(); if(fc){ const fe=document.querySelector(`[data-id="${fc.taskId}"]`); if(fe) fe.classList.add("focusing"); }
+  const sep=$("doneSep"); if(sep) sep.onclick=()=>{showDone=!showDone;renderTasks();};
+  // Drag & Drop: nur aktive Tasks frei ordnen
+  document.querySelectorAll('.tlist .task:not(.done)').forEach(el=>{
+    el.setAttribute("draggable","true");
+    el.addEventListener("dragstart",()=>el.classList.add("dragging"));
+    el.addEventListener("dragend",()=>{el.classList.remove("dragging");commitOrder();});
+  });
+}
+function getDragAfter(y){
+  const els=[...document.querySelectorAll('.tlist .task:not(.done):not(.dragging)')];
+  return els.reduce((closest,child)=>{
+    const box=child.getBoundingClientRect();
+    const offset=y-box.top-box.height/2;
+    if(offset<0 && offset>closest.offset) return {offset,el:child};
+    return closest;
+  },{offset:-Infinity,el:null}).el;
+}
+function commitOrder(){
+  const data=loadTasks();
+  const order=[...document.querySelectorAll('.tlist .task:not(.done)')].map(e=>e.dataset.id);
+  const active=order.map(id=>data.find(t=>t.id===id)).filter(Boolean);
+  const done=data.filter(t=>t.done);
+  saveTasks([...active,...done]); renderTasks();
+}
+function taskHtml(t){
+  const right = t.done
+    ? (t.timeSpent ? `<div class="spent" title="fokussierte Zeit">${fmtSpent(t.timeSpent)}</div>` : '')
+    : `<div class="play" title="Fokus starten">▶</div>`;
+  return `<div class="task ${t.done?'done':''}" data-id="${t.id}">
+    <div class="box"></div>
+    <div class="txt">${escapeHtml(t.text)}</div>
+    ${t.source==='inbox'?'<div class="src inbox">junia</div>':''}
+    ${right}
+    <div class="del" title="löschen">×</div>
+  </div>`;
+}
+function escapeHtml(s){return s.replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));}
+function toggle(id){
+  const f=loadFocus();
+  if(f && f.taskId===id){ commitFocusTime(f); saveFocus(null); }   // erledigter Fokus-Task -> Zeit loggen
+  const a=loadTasks();const t=a.find(x=>x.id===id);if(t){t.done=!t.done;t.doneAt=t.done?Date.now():null;}
+  saveTasks(a);renderTasks();renderFocus();
+  if(t&&t.done&&window.buddyReact) buddyReact("done");
+}
+function del(id){
+  const f=loadFocus(); if(f && f.taskId===id) saveFocus(null);    // gelöscht -> Fokus verwerfen
+  saveTasks(loadTasks().filter(x=>x.id!==id));renderTasks();renderFocus();
+}
+function addTask(text,source="manual"){
+  if(!text.trim())return;
+  const a=loadTasks();
+  a.unshift({id:"t"+Date.now()+Math.random().toString(36).slice(2,6),text:text.trim(),done:false,source,created:Date.now()});
+  saveTasks(a);renderTasks();
+}
+
+/* ================= FOKUS-TIMER ================= */
+const loadFocus=()=>CACHE.focus;
+const saveFocus=f=>{ CACHE.focus=f||null; pushField("focus", f||null); };
+function focusElapsed(f){ return f ? f.acc + (f.running ? Date.now()-f.lastStart : 0) : 0; }
+function fmtClock(ms){ const s=Math.floor(ms/1000),h=Math.floor(s/3600),m=Math.floor(s%3600/60),x=s%60; return h>0?`${h}:${pad(m)}:${pad(x)}`:`${m}:${pad(x)}`; }
+function fmtSpent(ms){ const s=Math.floor(ms/1000),h=Math.floor(s/3600),m=Math.floor(s%3600/60); return h>0?`${h}h ${m}m`:(m>0?`${m}m`:`${s}s`); }
+function addDaily(ms){ CACHE.daily[todayKey()]=(CACHE.daily[todayKey()]||0)+ms; pushField("daily", CACHE.daily); }
+function todayFocusMs(){ const f=loadFocus(); return (CACHE.daily[todayKey()]||0)+(f?focusElapsed(f):0); }
+function commitFocusTime(f){
+  const ms=focusElapsed(f);
+  if(ms>0){ const a=loadTasks(); const t=a.find(x=>x.id===f.taskId); if(t){ t.timeSpent=(t.timeSpent||0)+ms; saveTasks(a); } addDaily(ms); }
+}
+function startFocus(id){
+  const f=loadFocus();
+  if(f && f.taskId===id){ if(!f.running) toggleFocus(); return; }   // gleicher Task: ggf. fortsetzen
+  if(f) commitFocusTime(f);                                          // anderen laufenden erst sichern
+  saveFocus({taskId:id, acc:0, running:true, lastStart:Date.now()});
+  renderTasks(); renderFocus();
+}
+function toggleFocus(){
+  const f=loadFocus(); if(!f) return;
+  if(f.running){ f.acc=focusElapsed(f); f.running=false; } else { f.running=true; f.lastStart=Date.now(); }
+  saveFocus(f); renderFocus();
+}
+function stopFocus(){ const f=loadFocus(); if(!f) return; commitFocusTime(f); saveFocus(null); renderTasks(); renderFocus(); }
+function renderFocus(){
+  let f=loadFocus(), bar=$("focusbar");
+  if(f){ const t=loadTasks().find(x=>x.id===f.taskId); if(!t||t.done){ saveFocus(null); f=null; } }
+  if(!f){ bar.hidden=true; renderFocusHist(); return; }
+  const t=loadTasks().find(x=>x.id===f.taskId);
+  bar.hidden=false; bar.classList.toggle("running", f.running);
+  $("fbTask").textContent=t.text;
+  $("fbTime").textContent=fmtClock(focusElapsed(f));
+  $("fbTotal").textContent="gesamt "+fmtSpent((t.timeSpent||0)+focusElapsed(f));
+  $("fbToggle").textContent=f.running?"⏸":"▶";
+  renderFocusHist();
+}
+function fmtSpentBig(ms){ const s=Math.round(ms/1000),h=Math.floor(s/3600),m=Math.floor(s%3600/60); return h>0?`${h}<small>h</small> ${m}<small>m</small>`:`${m}<small>m</small>`; }
+function renderFocusHist(){
+  const daily=CACHE.daily;
+  const f=loadFocus(); const live=f?focusElapsed(f):0;
+  $("focusTodayBig").innerHTML=fmtSpentBig((daily[todayKey()]||0)+live);
+  const vals=[]; for(let i=6;i>=0;i--){ const d=new Date(); d.setDate(d.getDate()-i); const k=todayKey(d); let ms=daily[k]||0; if(k===todayKey()) ms+=live; vals.push({k,d,ms}); }
+  const max=Math.max(60*60*1000, ...vals.map(v=>v.ms));
+  $("focusHist").innerHTML=vals.map(v=>{
+    const hpx=v.ms>0?Math.max(4,Math.round(v.ms/max*46)):3;
+    return `<div class="col" title="${v.ms>0?fmtSpent(v.ms):'—'}"><div class="track"><div class="b ${v.ms>0?'':'bnone'} ${v.k===todayKey()?'cur':''}" style="height:${hpx}px"></div></div><div class="d">${["So","Mo","Di","Mi","Do","Fr","Sa"][v.d.getDay()]}</div></div>`;
+  }).join("");
+}
+// Schutz: lief der Timer und der Tab war lange weg / PC schlief -> langen Gap nicht zaehlen
+(function(){ const f=loadFocus(); if(f&&f.running && Date.now()-f.lastStart>3*3600*1000){ f.running=false; saveFocus(f); } })();
+$("fbToggle").onclick=toggleFocus;
+$("fbStop").onclick=stopFocus;
+setInterval(()=>{ const f=loadFocus(); if(f&&f.running){ const e=focusElapsed(f); $("fbTime").textContent=fmtClock(e); const t=loadTasks().find(x=>x.id===f.taskId); if(t)$("fbTotal").textContent="gesamt "+fmtSpent((t.timeSpent||0)+e); renderFocusHist(); } },1000);
+
+/* ================= Hub-Buddy „Revy" ================= */
+(function(){
+  const buddy=$("buddy"), bubble=$("buddyBubble"); if(!buddy) return;
+  const NAME="Revy"; buddy.title=NAME;
+  const QUIPS={
+    idle:["döst…","lädt Motivation…","poliert die Felgen","checkt Reifendruck","träumt von P1","wartet auf Vollgas","streckt sich","zählt Schäfchen"],
+    focus:["fokussiert 🏁","im Flow","Vollgas!","keine Boxenstopps","eyes on track","push push push"],
+    done:["P1! 🏆","fastest lap!","stark!","sauber abgehakt","nächster!"],
+    click:["hi 👋","na du?","kitzelt!","zoom zoom","ich pass auf"],
+    hello:[NAME+" hier 👋","na, was geht?","bereit wenn du's bist"]
+  };
+  function say(kind, ms){ const l=QUIPS[kind]||QUIPS.click; bubble.textContent=l[Math.floor(Math.random()*l.length)];
+    bubble.classList.add("show"); clearTimeout(say._t); say._t=setTimeout(()=>bubble.classList.remove("show"), ms||2600); }
+  function hop(){ buddy.classList.remove("jump"); void buddy.offsetWidth; buddy.classList.add("jump"); }
+
+  // ---- Mimik / Stimmung ----
+  let tempMood=null, baseMood=null;
+  function moods(){ buddy.classList.remove("mood-focus","mood-happy","mood-surprised","mood-sleepy");
+    const m=tempMood||baseMood; if(m) buddy.classList.add("mood-"+m); }
+  function flash(m, ms){ tempMood=m; moods(); clearTimeout(flash._t); flash._t=setTimeout(()=>{tempMood=null;moods();}, ms||1800); }
+
+  // ---- Augen folgen dem Cursor ----
+  document.addEventListener("mousemove", e=>{
+    const r=buddy.getBoundingClientRect(), cx=r.left+r.width/2, cy=r.top+r.height/2;
+    const dx=Math.max(-2,Math.min(2,(e.clientX-cx)/70)), dy=Math.max(-2,Math.min(2,(e.clientY-cy)/70));
+    buddy.querySelectorAll(".pupil").forEach(p=>p.style.transform=`translate(${dx}px,${dy}px)`);
+  });
+
+  // ---- Blinzeln ----
+  (function blink(){ buddy.classList.add("blink"); setTimeout(()=>buddy.classList.remove("blink"),150);
+    setTimeout(blink, 2600+Math.random()*4500); })();
+
+  // ---- Fokus läuft -> rennt + fokussierte Miene ----
+  setInterval(()=>{ const f=loadFocus(), run=!!(f&&f.running);
+    buddy.classList.toggle("run", run); baseMood=run?"focus":null; if(!tempMood) moods(); }, 1000);
+
+  function bub(txt, ms){ bubble.textContent=txt; bubble.classList.add("show"); clearTimeout(say._t); say._t=setTimeout(()=>bubble.classList.remove("show"), ms||2200); }
+
+  // ---- Stationäre Tricks (Heimat-Ecke) ----
+  function trick(cls, ms){ buddy.classList.add(cls); setTimeout(()=>buddy.classList.remove(cls), ms); }
+  const TRICKS=[
+    ()=>trick("tr-spin",700),
+    ()=>trick("tr-wiggle",550),
+    ()=>trick("tr-stretch",600),
+    ()=>{ flash("sleepy",2600); bub("Zzz…",2600); }              // Nickerchen
+  ];
+
+  // ---- Aktivitäten an Ort und Stelle (Heimat-Ecke, kein Rumlaufen) ----
+  let busy=false;
+  function actLaptop(){
+    if(busy) return; busy=true;
+    buddy.classList.add("act-laptop","sit");
+    setTimeout(()=>buddy.classList.add("typing"),300);
+    if(Math.random()<.6) bub("tippt…",2200);
+    setTimeout(()=>{ buddy.classList.remove("typing");
+      setTimeout(()=>{ buddy.classList.remove("act-laptop","sit"); busy=false; },350); }, 18000+Math.random()*42000);
+  }
+  function actCan(){
+    if(busy) return; busy=true;
+    buddy.classList.add("act-can");
+    setTimeout(()=>buddy.classList.add("drinking"),450);
+    setTimeout(()=>{
+      buddy.classList.remove("drinking","act-can");
+      buddy.classList.add("hyper"); flash("surprised",2600);   // vibriert auf der Stelle, ohne Spruch
+      setTimeout(()=>{ buddy.classList.remove("hyper"); busy=false; }, 2200);
+    }, 2100);
+  }
+  // ---- Aktivität: Trampolin (ab und zu mit Salto) ----
+  function actTramp(){
+    if(busy) return; busy=true;
+    const salto=Math.random()<.45;
+    buddy.classList.add("act-tramp", salto?"tramp-salto":"tramp-bounce");
+    setTimeout(()=>{ buddy.classList.remove("act-tramp","tramp-bounce","tramp-salto"); busy=false; }, salto?2750:2550);
+  }
+
+  // ---- Idle: ruhig in der Ecke, eher selten mal was ----
+  setInterval(()=>{
+    if(busy || bubble.classList.contains("show")) return;
+    const f=loadFocus(), running=!!(f&&f.running), r=Math.random();
+    if(running){ if(r<.30) say("focus"); return; }
+    if(r<.12) say("idle");
+    else if(r<.24) TRICKS[Math.floor(Math.random()*TRICKS.length)]();
+    else if(r<.33) actLaptop();
+    else if(r<.39) actCan();
+    else if(r<.47) actTramp();
+  }, 12000);
+
+  // ---- Interaktion + von außen ----
+  buddy.addEventListener("click", ()=>{ hop(); flash("surprised",900); say("click",1900); });
+  window.buddyReact=kind=>{ hop(); if(kind==="done") flash("happy",2400); say(kind||"click",2400); };
+
+  // ---- kurzer Gruß beim Laden ----
+  setTimeout(()=>say("hello",2800), 1200);
+})();
+$("addBtn").onclick=()=>{ $("addRow").classList.toggle("show"); if($("addRow").classList.contains("show")) $("addInput").focus(); };
+$("addSave").onclick=()=>{ addTask($("addInput").value); $("addInput").value=""; $("addInput").focus(); };
+$("addInput").addEventListener("keydown",e=>{ if(e.key==="Enter"){$("addSave").click();} if(e.key==="Escape"){$("addRow").classList.remove("show");} });
+
+/* ---- Import-Drop-Zone: data/inbox.json (von Agent/Routine geschrieben) ----
+   Format: { "tasks":[ {"id":"...", "text":"..."} ] }
+   Schon importierte ids werden gemerkt, damit nichts doppelt reinkommt. */
+async function importInbox(){
+  try{
+    const r=await fetch("data/inbox.json?t="+Date.now(),{cache:"no-store"});
+    if(!r.ok)return;
+    const j=await r.json();
+    if(!Array.isArray(j.tasks))return;
+    const imported=CACHE.imported.slice();
+    let changed=false;
+    j.tasks.forEach(it=>{
+      const key=it.id||it.text;
+      if(!imported.includes(key)){
+        addTask(it.text,"inbox"); imported.push(key); changed=true;
+      }
+    });
+    if(changed){ CACHE.imported=imported; pushField("imported", imported); }
+  }catch(e){/* keine inbox.json -> egal */}
+}
+$("tlist").addEventListener("dragover",e=>{
+  e.preventDefault();
+  const dragging=document.querySelector(".dragging"); if(!dragging) return;
+  const after=getDragAfter(e.clientY); const sep=$("doneSep");
+  if(after==null){ sep?$("tlist").insertBefore(dragging,sep):$("tlist").appendChild(dragging); }
+  else $("tlist").insertBefore(dragging,after);
+});
+renderTasks();
+renderFocus();
+/* importInbox() läuft jetzt aus dem Firebase-Listener (nach erstem Sync) */
+
+/* ================= JUNIA ================= */
+function statusClass(s){s=(s||"").toLowerCase();
+  if(s.includes("entfall")||s.includes("frei"))return"s-frei";
+  if(s.includes("vertret"))return"s-vertr";
+  if(s.includes("eva"))return"s-eva";return"";}
+async function loadJunia(){
+  try{
+    const r=await fetch("data/junia.json?t="+Date.now(),{cache:"no-store"});
+    if(!r.ok)throw 0;
+    const j=await r.json();
+    if(j.message)$("jmsg").textContent=j.message;
+    if(Array.isArray(j.schedule)&&j.schedule.length){
+      $("jrows").innerHTML=j.schedule.slice(0,6).map(e=>
+        `<div class="jrow ${statusClass(e.status)}"><span class="h">${e.hour??"·"}</span><span class="s">${e.subject??""}</span><span class="t">${e.status??""}</span></div>`).join("");
+    }
+    if(j.quote&&j.quote.text){
+      $("jquoteWrap").style.display="block";
+      $("jquote").textContent="„"+j.quote.text+"”";
+      $("jauthor").textContent=j.quote.author?"— "+j.quote.author:"";
+    }
+    $("jdot").classList.remove("off");
+    const t=j.updated?new Date(j.updated):new Date();
+    $("jupdated").textContent="aktualisiert "+pad(t.getHours())+":"+pad(t.getMinutes());
+  }catch(e){
+    $("jmsg").textContent="Junia ist noch nicht verbunden. Sobald deine Pipeline eine data/junia.json schreibt (Briefing, Plan, Spruch), landet sie hier.";
+    $("jdot").classList.add("off");
+    $("jupdated").textContent="keine junia.json";
+  }
+}
+loadJunia(); setInterval(loadJunia, 10*60*1000);
+
+/* ================= Hintergrund: animierte Dot-Welle ================= */
+(function(){
+  const cv=$("bg"); if(!cv) return;
+  const ctx=cv.getContext("2d");
+  let w,h,dpr;
+  function resize(){
+    dpr=Math.min(window.devicePixelRatio||1,2);
+    w=cv.width=Math.floor(innerWidth*dpr); h=cv.height=Math.floor(innerHeight*dpr);
+    cv.style.width=innerWidth+"px"; cv.style.height=innerHeight+"px";
+  }
+  resize(); addEventListener("resize",resize);
+  const GAP=22; let t=0;
+  function frame(){
+    ctx.clearRect(0,0,w,h);
+    const gap=GAP*dpr, amp=h*0.20, band=h*0.34;
+    for(let x=0;x<w+gap;x+=gap){
+      // zwei überlagerte Wellen -> organisch fließende Mittellinie
+      const yc = h*0.52 + Math.sin(x*0.0045 + t)*amp + Math.sin(x*0.011 - t*0.6)*amp*0.35;
+      for(let y=0;y<h+gap;y+=gap){
+        let f = 1 - Math.abs(y-yc)/band;            // 1 an der Welle, 0 am Rand
+        if(f<=0.04) continue;                        // weit weg -> kein Punkt (Ribbon)
+        f=f*f;                                        // Kontrast schärfen
+        const r=(0.3+f*2.7)*dpr, a=0.06+f*0.26;
+        ctx.beginPath();
+        ctx.arc(x, y, r, 0, 6.2832);
+        ctx.fillStyle="rgba(180,180,190,"+a.toFixed(3)+")";
+        ctx.fill();
+      }
+    }
+    t+=0.006; requestAnimationFrame(frame);
+  }
+  frame();
+})();
+</script>
+</body>
+</html>

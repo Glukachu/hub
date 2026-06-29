@@ -1,0 +1,4 @@
+{
+  "_comment": "Drop-Zone fuer importierte Tasks. Ein Agent / eine Routine schreibt hier rein. Beim naechsten Oeffnen des Cockpits tauchen neue Tasks auf (per id dedupliziert). Leere Liste = nichts zu importieren.",
+  "tasks": []
+}
