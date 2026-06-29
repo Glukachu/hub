@@ -31,6 +31,10 @@
   .app{max-width:1380px;margin:0 auto;position:relative;z-index:1}
   #loginOverlay{position:fixed;inset:0;z-index:200;background:var(--bg);display:flex;align-items:center;justify-content:center}
   #loginOverlay[hidden]{display:none}
+  #migrateBtn{position:fixed;top:14px;left:50%;transform:translateX(-50%);z-index:80;
+    background:var(--accent);color:#0b0b0b;border:none;font-family:"Inter";font-weight:700;font-size:13px;
+    padding:11px 18px;border-radius:12px;cursor:pointer;box-shadow:0 6px 24px rgba(0,0,0,.45)}
+  #migrateBtn[hidden]{display:none}
   .login-card{width:320px;max-width:88vw;background:var(--panel);border:1px solid var(--line);border-radius:18px;padding:28px}
   .login-card .logo{font-family:"Anton";font-size:26px;text-transform:uppercase;letter-spacing:1px}
   .login-card .logo b{color:var(--accent)}
@@ -296,6 +300,7 @@
     <div class="login-err" id="loginErr"></div>
   </div>
 </div>
+<button id="migrateBtn" hidden>⬆ Alte lokale Daten in die Cloud holen</button>
 <div class="buddy" id="buddy">
   <div class="bubble" id="buddyBubble"></div>
   <div class="trampoline"><span class="mat"></span><span class="leg l"></span><span class="leg r"></span></div>
@@ -428,7 +433,7 @@ function applyState(d){
 let fbStarted=false, syncStarted=false;
 function startSync(){
   if(syncStarted) return; syncStarted=true;
-  STATE_REF.onSnapshot(snap=>{ applyState(snap.data()); if(!fbStarted){ fbStarted=true; importInbox(); } },
+  STATE_REF.onSnapshot(snap=>{ applyState(snap.data()); if(!fbStarted){ fbStarted=true; importInbox(); checkMigrate(); } },
     err=>console.warn("fb snapshot", err));
 }
 /* ===== Auth-Gate (Login davor) ===== */
@@ -456,6 +461,32 @@ function hubLogin(){
 }
 $("loginBtn").onclick=hubLogin;
 $("loginPw").addEventListener("keydown",e=>{ if(e.key==="Enter") hubLogin(); });
+
+/* ===== Einmalige Migration: alte localStorage-Daten -> Cloud ===== */
+function checkMigrate(){
+  if(localStorage.getItem("cockpit_migrated")) return;
+  const has = localStorage.getItem("cockpit_tasks")||localStorage.getItem("cockpit_sleep")||localStorage.getItem("cockpit_focus_daily");
+  const b=$("migrateBtn"); if(has && b) b.hidden=false;
+}
+function migrateLocal(){
+  const J=(k,d)=>{ try{ const v=JSON.parse(localStorage.getItem(k)); return v==null?d:v; }catch(e){ return d; } };
+  const oTasks=J("cockpit_tasks",[]), oSleep=J("cockpit_sleep",{}), oFocus=J("cockpit_focus",null),
+        oDaily=J("cockpit_focus_daily",{}), oImp=J("cockpit_imported",[]);
+  const ids=new Set(CACHE.tasks.map(t=>t.id));
+  const tasks=[...CACHE.tasks, ...(Array.isArray(oTasks)?oTasks:[]).filter(t=>t&&!ids.has(t.id))];
+  const sleep={...CACHE.sleep, ...oSleep};                 // alte Historie gewinnt bei Konflikt
+  const daily={...CACHE.daily, ...oDaily};
+  const imp=[...new Set([...CACHE.imported, ...(Array.isArray(oImp)?oImp:[])])];
+  CACHE.tasks=tasks; pushField("tasks",tasks);
+  CACHE.sleep=sleep; pushField("sleep",sleep);
+  CACHE.daily=daily; pushField("daily",daily);
+  CACHE.imported=imp; pushField("imported",imp);
+  if(!CACHE.focus && oFocus){ CACHE.focus=oFocus; pushField("focus",oFocus); }
+  localStorage.setItem("cockpit_migrated","1");
+  renderSleep(); renderTasks(); renderFocus();
+  const b=$("migrateBtn"); if(b){ b.textContent="✓ "+tasks.length+" Tasks · "+Object.keys(sleep).length+" Schlaftage übertragen"; setTimeout(()=>{b.hidden=true;}, 5000); }
+}
+$("migrateBtn").onclick=migrateLocal;
 
 /* Schlaf-Daten (Cache, Sync via Firebase) */
 const loadSleep = () => CACHE.sleep;
