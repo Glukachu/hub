@@ -1115,11 +1115,13 @@ function renderGymDepart(){
   $("gymDepart").innerHTML=`<div class="d-lbl">Abfahrt heute</div><div class="d-time">${s.depart}</div><div class="d-open">Gym offen: ${s.open}</div>`;
 }
 function renderGymStreak(today){
-  let streak=0, prev=null;
+  let streak=0, prev=null, started=false;
   for(let i=0;i<400;i++){
     const t=CACHE.gym[todayKey(new Date(today.getTime()-i*864e5))]||"rest";
-    if(prev!==null && t===prev) break;
-    streak++; prev=t;
+    if(!started){ if(t==="rest") continue; started=true; streak=1; prev=t; continue; }  // führende Rest-Tage zählen nicht
+    if(t===prev) break;            // 2x dasselbe hintereinander -> Serie endet
+    if(t!=="rest") streak++;       // nur Trainingstage zählen; einzelner Rest überbrückt
+    prev=t;
   }
   $("gymStreak").textContent=streak;
 }
