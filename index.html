@@ -421,14 +421,15 @@ firebase.initializeApp(firebaseConfig);
 const db = firebase.firestore();
 db.enablePersistence({synchronizeTabs:true}).catch(()=>{});   // Offline-Cache
 const STATE_REF = db.collection("state").doc("main");
-const CACHE = { tasks:[], sleep:{}, focus:null, daily:{}, imported:[] };
+const CACHE = { tasks:[], sleep:{}, focus:null, daily:{}, imported:[], junia:null };
 function pushField(field, value){
   STATE_REF.set({ [field]: (value===undefined?null:value) }, { merge:true }).catch(e=>console.warn("fb push", field, e));
 }
 function applyState(d){
   d=d||{};
-  CACHE.tasks=d.tasks||[]; CACHE.sleep=d.sleep||{}; CACHE.focus=d.focus||null; CACHE.daily=d.daily||{}; CACHE.imported=d.imported||[];
+  CACHE.tasks=d.tasks||[]; CACHE.sleep=d.sleep||{}; CACHE.focus=d.focus||null; CACHE.daily=d.daily||{}; CACHE.imported=d.imported||[]; CACHE.junia=d.junia||null;
   renderSleep(); renderTasks(); renderFocus();
+  if(CACHE.junia && CACHE.junia.message) renderJunia(CACHE.junia);
 }
 let fbStarted=false, syncStarted=false;
 function startSync(){
@@ -902,29 +903,33 @@ function statusClass(s){s=(s||"").toLowerCase();
   if(s.includes("entfall")||s.includes("frei"))return"s-frei";
   if(s.includes("vertret"))return"s-vertr";
   if(s.includes("eva"))return"s-eva";return"";}
+function renderJunia(j){
+  if(!j || !j.message){
+    $("jmsg").textContent="junia ist noch nicht verbunden. Sobald die Cloud-Action ein Briefing schreibt, landet es hier.";
+    $("jrows").innerHTML=""; $("jquoteWrap").style.display="none";
+    $("jdot").classList.add("off"); $("jupdated").textContent="—"; return;
+  }
+  $("jmsg").textContent=j.message;
+  if(Array.isArray(j.schedule)&&j.schedule.length){
+    $("jrows").innerHTML=j.schedule.slice(0,6).map(e=>
+      `<div class="jrow ${statusClass(e.status)}"><span class="h">${e.hour??"·"}</span><span class="s">${e.subject??""}</span><span class="t">${e.status??""}</span></div>`).join("");
+  } else $("jrows").innerHTML="";
+  if(j.quote&&j.quote.text){
+    $("jquoteWrap").style.display="block";
+    $("jquote").textContent="„"+j.quote.text+"”";
+    $("jauthor").textContent=j.quote.author?"— "+j.quote.author:"";
+  } else $("jquoteWrap").style.display="none";
+  $("jdot").classList.remove("off");
+  const t=j.updated?new Date(j.updated):new Date();
+  $("jupdated").textContent="aktualisiert "+pad(t.getHours())+":"+pad(t.getMinutes());
+}
 async function loadJunia(){
+  if(CACHE.junia && CACHE.junia.message){ renderJunia(CACHE.junia); return; }   // Firestore (privat) hat Vorrang
   try{
     const r=await fetch("data/junia.json?t="+Date.now(),{cache:"no-store"});
     if(!r.ok)throw 0;
-    const j=await r.json();
-    if(j.message)$("jmsg").textContent=j.message;
-    if(Array.isArray(j.schedule)&&j.schedule.length){
-      $("jrows").innerHTML=j.schedule.slice(0,6).map(e=>
-        `<div class="jrow ${statusClass(e.status)}"><span class="h">${e.hour??"·"}</span><span class="s">${e.subject??""}</span><span class="t">${e.status??""}</span></div>`).join("");
-    }
-    if(j.quote&&j.quote.text){
-      $("jquoteWrap").style.display="block";
-      $("jquote").textContent="„"+j.quote.text+"”";
-      $("jauthor").textContent=j.quote.author?"— "+j.quote.author:"";
-    }
-    $("jdot").classList.remove("off");
-    const t=j.updated?new Date(j.updated):new Date();
-    $("jupdated").textContent="aktualisiert "+pad(t.getHours())+":"+pad(t.getMinutes());
-  }catch(e){
-    $("jmsg").textContent="Junia ist noch nicht verbunden. Sobald deine Pipeline eine data/junia.json schreibt (Briefing, Plan, Spruch), landet sie hier.";
-    $("jdot").classList.add("off");
-    $("jupdated").textContent="keine junia.json";
-  }
+    renderJunia(await r.json());
+  }catch(e){ renderJunia(null); }
 }
 loadJunia(); setInterval(loadJunia, 10*60*1000);
 
