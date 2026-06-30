@@ -273,6 +273,34 @@
   .buddy.tramp-salto .rig{animation:trampS 2.7s ease-in-out}
   @keyframes trampB{0%{transform:translateY(0)}14%{transform:translateY(-26px)}28%{transform:translateY(0)}42%{transform:translateY(-20px)}56%{transform:translateY(0)}70%{transform:translateY(-13px)}85%{transform:translateY(0)}100%{transform:translateY(0)}}
   @keyframes trampS{0%{transform:translateY(0) rotate(0)}18%{transform:translateY(-32px) rotate(180deg)}36%{transform:translateY(0) rotate(360deg)}52%{transform:translateY(-20px) rotate(360deg)}68%{transform:translateY(0) rotate(360deg)}84%{transform:translateY(-12px) rotate(360deg)}100%{transform:translateY(0) rotate(360deg)}}
+  /* ---- Kopfhörer (Musik) ---- */
+  .buddy .phones{position:absolute;inset:0;opacity:0;transition:opacity .2s;pointer-events:none}
+  .buddy.act-phones .phones{opacity:1}
+  .buddy .phones .band{position:absolute;top:-2px;left:5px;width:32px;height:13px;border:3px solid #2b2b30;border-bottom:none;border-radius:16px 16px 0 0}
+  .buddy .phones .cup{position:absolute;top:9px;width:7px;height:12px;border-radius:4px;background:#2b2b30}
+  .buddy .phones .cup.l{left:-3px} .buddy .phones .cup.r{right:-3px}
+  .buddy .phones .cup::after{content:"";position:absolute;inset:2px;border-radius:3px;background:var(--accent);opacity:.45}
+  .buddy.act-phones .body{animation:headbob .45s ease-in-out infinite}
+  @keyframes headbob{0%,100%{transform:translateY(0) rotate(-5deg)}50%{transform:translateY(-2px) rotate(5deg)}}
+  .buddy .note{position:absolute;bottom:50px;font-size:12px;font-weight:700;color:var(--accent);pointer-events:none;animation:noteFloat 1.5s ease-out forwards}
+  @keyframes noteFloat{0%{opacity:0;transform:translateY(0) scale(.6)}20%{opacity:.9}100%{opacity:0;transform:translateY(-28px) scale(1)}}
+  /* ---- Liegestütze ---- */
+  .buddy.act-pushup .body{animation:none}
+  .buddy.act-pushup .rig{animation:pushup .5s ease-in-out infinite}
+  @keyframes pushup{0%,100%{transform:rotate(20deg) translateY(0)}50%{transform:rotate(20deg) translateY(5px)}}
+  .buddy .sweatdrop{position:absolute;top:6px;right:3px;width:4px;height:5px;border-radius:50% 50% 50% 50%/60% 60% 40% 40%;background:#9fd8ff;opacity:0}
+  .buddy.act-pushup .sweatdrop{animation:sweat 1.1s ease-in infinite}
+  @keyframes sweat{0%{opacity:0;transform:translate(0,0)}25%{opacity:.9}100%{opacity:0;transform:translate(7px,-9px)}}
+  /* ---- Boxenstopp ---- */
+  .buddy.act-pit .tire{opacity:1}
+  .buddy.act-pit .rig{transform:rotate(8deg)}
+  .buddy.pit-go .body{animation:hyperShake .06s infinite}
+  .tire{left:13px;width:16px;height:16px}
+  .tire .rim{position:absolute;inset:0;border-radius:50%;background:#1f1f24;border:3px solid #45454c}
+  .tire .rim::after{content:"";position:absolute;inset:4px;border-radius:50%;border:2px solid #6a6a72;background:#2a2a30}
+  .tire .rim::before{content:"";position:absolute;top:1px;left:50%;width:2.5px;height:2.5px;margin-left:-1.25px;border-radius:50%;background:var(--accent);z-index:1}
+  .buddy.pit-go .tire .rim{animation:tirespin .18s linear infinite}
+  @keyframes tirespin{to{transform:rotate(360deg)}}
   .buddy .foot{position:absolute;bottom:0;width:9px;height:5px;border-radius:50%;background:var(--accent)}
   .buddy .foot.l{left:14px} .buddy .foot.r{left:31px}
   @keyframes buddyBob{0%,100%{transform:translateY(0) scaleY(1)}50%{transform:translateY(-4px) scaleY(1.03)}}
@@ -311,9 +339,12 @@
       <span class="eye l"><span class="pupil"></span></span>
       <span class="eye r"><span class="pupil"></span></span>
       <span class="mouth"></span>
+      <span class="phones"><span class="band"></span><span class="cup l"></span><span class="cup r"></span></span>
+      <span class="sweatdrop"></span>
     </div>
     <div class="prop laptop"><span class="screen"></span><span class="base"></span></div>
     <div class="prop can"><span class="can-body"></span><span class="can-top"></span></div>
+    <div class="prop tire"><span class="rim"></span></div>
   </div>
 </div>
 <div class="app">
@@ -843,17 +874,49 @@ setInterval(()=>{ const f=loadFocus(); if(f&&f.running){ const e=focusElapsed(f)
     buddy.classList.add("act-tramp", salto?"tramp-salto":"tramp-bounce");
     setTimeout(()=>{ buddy.classList.remove("act-tramp","tramp-bounce","tramp-salto"); busy=false; }, salto?2750:2550);
   }
+  // ---- Aktivität: Kopfhörer (Musik) ----
+  function floatNote(){
+    const n=document.createElement("span"); n.className="note";
+    n.textContent = Math.random()<.5?"♪":"♫"; n.style.left=(8+Math.random()*30)+"px";
+    buddy.appendChild(n); setTimeout(()=>n.remove(), 1500);
+  }
+  function actPhones(){
+    if(busy) return; busy=true;
+    buddy.classList.add("act-phones");
+    if(Math.random()<.5) bub("🎧 vibe", 2000);
+    const nt=setInterval(floatNote, 650);
+    setTimeout(()=>{ clearInterval(nt); buddy.classList.remove("act-phones"); busy=false; }, 6000+Math.random()*3000);
+  }
+  // ---- Aktivität: Liegestütze ----
+  function actPushup(){
+    if(busy) return; busy=true;
+    buddy.classList.add("act-pushup");
+    if(Math.random()<.5) bub("💪 Saisonvorbereitung", 2200);
+    setTimeout(()=>{ buddy.classList.remove("act-pushup"); busy=false; }, 4500+Math.random()*2500);
+  }
+  // ---- Aktivität: Boxenstopp ----
+  function actPit(){
+    if(busy) return; busy=true;
+    buddy.classList.add("act-pit","pit-go");
+    setTimeout(()=>{
+      buddy.classList.remove("pit-go"); bub("2,4s! 🏁", 2200);
+      setTimeout(()=>{ buddy.classList.remove("act-pit"); busy=false; }, 1200);
+    }, 2400);
+  }
 
   // ---- Idle: ruhig in der Ecke, eher selten mal was ----
   setInterval(()=>{
     if(busy || bubble.classList.contains("show")) return;
     const f=loadFocus(), running=!!(f&&f.running), r=Math.random();
     if(running){ if(r<.30) say("focus"); return; }
-    if(r<.12) say("idle");
-    else if(r<.24) TRICKS[Math.floor(Math.random()*TRICKS.length)]();
-    else if(r<.33) actLaptop();
-    else if(r<.39) actCan();
-    else if(r<.47) actTramp();
+    if(r<.10) say("idle");
+    else if(r<.20) TRICKS[Math.floor(Math.random()*TRICKS.length)]();
+    else if(r<.27) actLaptop();
+    else if(r<.33) actCan();
+    else if(r<.39) actTramp();
+    else if(r<.46) actPhones();
+    else if(r<.52) actPushup();
+    else if(r<.58) actPit();
   }, 12000);
 
   // ---- Interaktion + von außen ----
