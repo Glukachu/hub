@@ -20,6 +20,7 @@
     --bg:#0c0c0d; --panel:#161618; --panel2:#1d1d20; --line:#2a2a2e;
     --txt:#f0f0ee; --muted:#7c7c84; --accent:#c8f92e; --accent-dim:rgba(200,249,46,.12);
     --ok:#c8f92e; --warn:#ffb340; --info:#6fa8ff; --danger:#ff5f56;
+  --g-push:#e5484d; --g-pull:#4f8cff; --g-leg:#3fbf6a; --g-cardio:#f5a623; --g-rest:#26262c;
   }
   *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
   html,body{background:var(--bg);color:var(--txt);font-family:"Inter",system-ui,sans-serif;
@@ -314,6 +315,53 @@
     color:var(--txt);font-size:12px;font-weight:500;padding:6px 10px;border-radius:11px;white-space:nowrap;
     opacity:0;transform:translateY(5px);transition:opacity .25s,transform .25s;pointer-events:none}
   .buddy .bubble.show{opacity:1;transform:translateY(0)}
+  /* ================= GYM ================= */
+  .gymcard{margin-top:20px;position:relative}
+  .gym-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:18px;gap:14px;flex-wrap:wrap}
+  .gym-head h2{margin-bottom:0}
+  .gym-tf{display:flex;gap:3px;background:var(--panel2);border:1px solid var(--line);border-radius:10px;padding:3px}
+  .gym-tf button{background:none;border:none;color:var(--muted);font-family:"Inter";font-size:12px;font-weight:600;padding:6px 13px;border-radius:8px;cursor:pointer}
+  .gym-tf button.on{background:var(--accent);color:#0b0b0b}
+  .gym-body{display:flex;gap:30px;align-items:flex-start}
+  @media(max-width:920px){.gym-body{flex-direction:column}}
+  .gym-left{flex:1;min-width:0}
+  .gym-right{width:300px;flex:none;display:flex;flex-direction:column;gap:14px}
+  @media(max-width:920px){.gym-right{width:100%}}
+  .gym-dow,.gym-grid{display:grid;grid-template-columns:repeat(7,24px);gap:5px}
+  .gym-dow{margin-bottom:6px}
+  .gym-dow span{font-size:10px;color:var(--muted);text-align:center;text-transform:uppercase;letter-spacing:.5px}
+  .gym-cell{width:24px;height:24px;border-radius:5px;background:var(--g-rest);border:1px solid var(--line);cursor:pointer;position:relative;transition:transform .1s}
+  .gym-cell:hover{transform:scale(1.1)}
+  .gym-cell.push{background:var(--g-push);border-color:var(--g-push)}
+  .gym-cell.pull{background:var(--g-pull);border-color:var(--g-pull)}
+  .gym-cell.leg{background:var(--g-leg);border-color:var(--g-leg)}
+  .gym-cell.cardio{background:var(--g-cardio);border-color:var(--g-cardio)}
+  .gym-cell.spacer{visibility:hidden;pointer-events:none}
+  .gym-cell.future{opacity:.22;cursor:default}
+  .gym-cell.future:hover{transform:none}
+  .gym-cell.today{box-shadow:0 0 0 2px var(--accent);border-color:var(--accent)}
+  .gym-cell .dn{position:absolute;top:1px;left:3px;font-size:8px;line-height:1;color:rgba(255,255,255,.45)}
+  .gym-legend{display:flex;flex-wrap:wrap;gap:13px;margin-top:16px;font-size:11px;color:var(--muted)}
+  .gym-legend i{display:inline-block;width:10px;height:10px;border-radius:3px;margin-right:5px;vertical-align:-1px}
+  .sw.push{background:var(--g-push)} .sw.pull{background:var(--g-pull)} .sw.leg{background:var(--g-leg)} .sw.cardio{background:var(--g-cardio)} .sw.rest{background:var(--g-rest);border:1px solid var(--line)}
+  .gym-depart{background:var(--accent-dim);border:1px solid var(--accent);border-radius:13px;padding:13px 15px}
+  .gym-depart .d-lbl{font-size:11px;text-transform:uppercase;letter-spacing:1px;color:var(--accent);font-weight:700}
+  .gym-depart .d-time{font-family:"Anton";font-size:32px;color:var(--accent);line-height:1;margin-top:4px}
+  .gym-depart .d-open{font-size:12px;color:var(--muted);margin-top:6px}
+  .gym-stats{display:flex;gap:16px;align-items:center;background:var(--panel2);border:1px solid var(--line);border-radius:13px;padding:14px 16px}
+  .gym-streak{text-align:center;flex:none}
+  .gym-streak .num{font-family:"Anton";font-size:38px;color:var(--accent);line-height:1}
+  .gym-streak .lbl{font-size:10px;color:var(--muted);margin-top:4px;text-transform:uppercase;letter-spacing:.5px}
+  .gym-pie-wrap{flex:1;display:flex;gap:12px;align-items:center;min-width:0}
+  .gym-pie{width:72px;height:72px;border-radius:50%;flex:none}
+  .gym-pie.empty{background:var(--panel)!important;border:1px dashed var(--line)}
+  .gym-pie-leg{font-size:11px;color:var(--muted);display:flex;flex-direction:column;gap:3px}
+  .gym-pie-leg i{display:inline-block;width:8px;height:8px;border-radius:2px;margin-right:6px}
+  .gym-pop{position:absolute;z-index:90;background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:5px;display:flex;flex-direction:column;gap:3px;box-shadow:0 8px 28px rgba(0,0,0,.55)}
+  .gym-pop[hidden]{display:none}
+  .gym-pop button{background:var(--panel2);border:1px solid var(--line);color:var(--txt);font-size:12px;font-weight:600;padding:7px 13px;border-radius:7px;cursor:pointer;text-align:left;white-space:nowrap}
+  .gym-pop button:hover{border-color:var(--accent)}
+  .gym-pop button .pd{display:inline-block;width:9px;height:9px;border-radius:2px;margin-right:8px;vertical-align:-1px}
 </style>
 </head>
 <body>
@@ -418,6 +466,43 @@
     </div>
 
   </div>
+
+  <!-- ============ GYM ============ -->
+  <div class="card gymcard" id="gymCard">
+    <div class="gym-head">
+      <h2><span class="bar"></span>Gym</h2>
+      <div class="gym-tf" id="gymTf">
+        <button data-tf="week" class="on">Woche</button>
+        <button data-tf="month">Monat</button>
+        <button data-tf="90">90 Tage</button>
+      </div>
+    </div>
+    <div class="gym-body">
+      <div class="gym-left">
+        <div class="gym-dow"><span>Mo</span><span>Di</span><span>Mi</span><span>Do</span><span>Fr</span><span>Sa</span><span>So</span></div>
+        <div class="gym-grid" id="gymGrid"></div>
+        <div class="gym-legend">
+          <span><i class="sw push"></i>Push</span><span><i class="sw pull"></i>Pull</span>
+          <span><i class="sw leg"></i>Leg</span><span><i class="sw cardio"></i>Cardio</span>
+          <span><i class="sw rest"></i>Rest</span>
+        </div>
+      </div>
+      <div class="gym-right">
+        <div class="gym-depart" id="gymDepart"></div>
+        <div class="gym-stats">
+          <div class="gym-streak"><div class="num" id="gymStreak">0</div><div class="lbl">🔥 Serie</div></div>
+          <div class="gym-pie-wrap"><div class="gym-pie empty" id="gymPie"></div><div class="gym-pie-leg" id="gymPieLeg"></div></div>
+        </div>
+      </div>
+    </div>
+    <div class="gym-pop" id="gymPop" hidden>
+      <button data-t="push"><span class="pd" style="background:var(--g-push)"></span>Push</button>
+      <button data-t="pull"><span class="pd" style="background:var(--g-pull)"></span>Pull</button>
+      <button data-t="leg"><span class="pd" style="background:var(--g-leg)"></span>Leg</button>
+      <button data-t="cardio"><span class="pd" style="background:var(--g-cardio)"></span>Cardio</button>
+      <button data-t="rest"><span class="pd" style="background:var(--g-rest)"></span>Rest</button>
+    </div>
+  </div>
 </div>
 
 <script>
@@ -452,14 +537,14 @@ firebase.initializeApp(firebaseConfig);
 const db = firebase.firestore();
 db.enablePersistence({synchronizeTabs:true}).catch(()=>{});   // Offline-Cache
 const STATE_REF = db.collection("state").doc("main");
-const CACHE = { tasks:[], sleep:{}, focus:null, daily:{}, imported:[], junia:null };
+const CACHE = { tasks:[], sleep:{}, focus:null, daily:{}, imported:[], junia:null, gym:{} };
 function pushField(field, value){
   STATE_REF.set({ [field]: (value===undefined?null:value) }, { merge:true }).catch(e=>console.warn("fb push", field, e));
 }
 function applyState(d){
   d=d||{};
-  CACHE.tasks=d.tasks||[]; CACHE.sleep=d.sleep||{}; CACHE.focus=d.focus||null; CACHE.daily=d.daily||{}; CACHE.imported=d.imported||[]; CACHE.junia=d.junia||null;
-  renderSleep(); renderTasks(); renderFocus();
+  CACHE.tasks=d.tasks||[]; CACHE.sleep=d.sleep||{}; CACHE.focus=d.focus||null; CACHE.daily=d.daily||{}; CACHE.imported=d.imported||[]; CACHE.junia=d.junia||null; CACHE.gym=d.gym||{};
+  renderSleep(); renderTasks(); renderFocus(); renderGym();
   if(CACHE.junia && CACHE.junia.message) renderJunia(CACHE.junia);
 }
 let fbStarted=false, syncStarted=false;
@@ -995,6 +1080,78 @@ async function loadJunia(){
   }catch(e){ renderJunia(null); }
 }
 loadJunia(); setInterval(loadJunia, 10*60*1000);
+
+/* ================= GYM ================= */
+let gymTf="week";
+const GYM_SCHEDULE={  // Wochentag 0=So..6=Sa. Öffnungszeiten = Platzhalter, Julian füllt sie.
+  1:{depart:"20:45",open:"—"}, 2:{depart:"20:45",open:"—"}, 3:{depart:"20:45",open:"—"},
+  4:{depart:"20:45",open:"—"}, 5:{depart:"19:45",open:"—"}, 6:{depart:"—",open:"—"}, 0:{depart:"—",open:"—"}
+};
+const GYM_TYPES=["push","pull","leg","cardio"];
+const GYM_COL={push:"var(--g-push)",pull:"var(--g-pull)",leg:"var(--g-leg)",cardio:"var(--g-cardio)"};
+function gymMonday(d){ const x=new Date(d); x.setHours(0,0,0,0); const w=(x.getDay()+6)%7; x.setDate(x.getDate()-w); return x; }
+function gymRangeStart(today){
+  if(gymTf==="week") return gymMonday(today);
+  if(gymTf==="month") return new Date(today.getFullYear(),today.getMonth(),1);
+  return new Date(today.getTime()-89*864e5);
+}
+function renderGym(){
+  if(!$("gymGrid")) return;
+  const today=new Date(); today.setHours(0,0,0,0); const tk=todayKey(today);
+  const start=gymRangeStart(today), gridStart=gymMonday(start);
+  const gridEnd=gymMonday(today); gridEnd.setDate(gridEnd.getDate()+6);
+  let html="";
+  for(let d=new Date(gridStart); d<=gridEnd; d.setDate(d.getDate()+1)){
+    const k=todayKey(d), type=CACHE.gym[k]||"rest";
+    const cls="gym-cell"+(type!=="rest"?" "+type:"")+(d<start?" spacer":"")+(d>today?" future":"")+(k===tk?" today":"");
+    html+=`<div class="${cls}" data-k="${k}"><span class="dn">${d.getDate()}</span></div>`;
+  }
+  const g=$("gymGrid"); g.innerHTML=html;
+  g.querySelectorAll(".gym-cell:not(.spacer):not(.future)").forEach(c=>c.onclick=()=>openGymPop(c,c.dataset.k));
+  renderGymDepart(); renderGymStreak(today); renderGymPie(start,today);
+}
+function renderGymDepart(){
+  const s=GYM_SCHEDULE[new Date().getDay()]||{depart:"—",open:"—"};
+  $("gymDepart").innerHTML=`<div class="d-lbl">Abfahrt heute</div><div class="d-time">${s.depart}</div><div class="d-open">Gym offen: ${s.open}</div>`;
+}
+function renderGymStreak(today){
+  let streak=0, prev=null;
+  for(let i=0;i<400;i++){
+    const t=CACHE.gym[todayKey(new Date(today.getTime()-i*864e5))]||"rest";
+    if(prev!==null && t===prev) break;
+    streak++; prev=t;
+  }
+  $("gymStreak").textContent=streak;
+}
+function renderGymPie(start, today){
+  const c={push:0,pull:0,leg:0,cardio:0};
+  for(let d=new Date(start); d<=today; d.setDate(d.getDate()+1)){ const t=CACHE.gym[todayKey(d)]; if(t&&c[t]!==undefined) c[t]++; }
+  const total=c.push+c.pull+c.leg+c.cardio, pie=$("gymPie");
+  if(!total){ pie.classList.add("empty"); pie.style.background=""; }
+  else{
+    pie.classList.remove("empty");
+    let acc=0, stops=[];
+    GYM_TYPES.forEach(t=>{ if(!c[t]) return; const f=c[t]/total; stops.push(`${GYM_COL[t]} ${(acc*100).toFixed(1)}% ${((acc+f)*100).toFixed(1)}%`); acc+=f; });
+    pie.style.background=`conic-gradient(${stops.join(",")})`;
+  }
+  $("gymPieLeg").innerHTML=GYM_TYPES.map(t=>`<span><i style="background:${GYM_COL[t]}"></i>${t[0].toUpperCase()+t.slice(1)} ${c[t]}</span>`).join("");
+}
+function openGymPop(cell, k){
+  const pop=$("gymPop"), cr=$("gymCard").getBoundingClientRect(), r=cell.getBoundingClientRect();
+  pop.dataset.k=k; pop.hidden=false;
+  const left=r.left-cr.left; pop.style.left=left+"px"; pop.style.top=(r.bottom-cr.top+5)+"px";
+  requestAnimationFrame(()=>{ const pr=pop.getBoundingClientRect(); if(pr.right>innerWidth-8) pop.style.left=(left-(pr.right-innerWidth+8))+"px"; });
+}
+function setGym(k, type){
+  if(type==="rest") delete CACHE.gym[k]; else CACHE.gym[k]=type;
+  pushField("gym", CACHE.gym); renderGym();
+}
+$("gymTf").querySelectorAll("button").forEach(b=>b.onclick=()=>{
+  gymTf=b.dataset.tf; $("gymTf").querySelectorAll("button").forEach(x=>x.classList.toggle("on",x===b)); renderGym();
+});
+$("gymPop").querySelectorAll("button").forEach(b=>b.onclick=()=>{ setGym($("gymPop").dataset.k, b.dataset.t); $("gymPop").hidden=true; });
+document.addEventListener("click", e=>{ const pop=$("gymPop"); if(!pop.hidden && !pop.contains(e.target) && !e.target.closest(".gym-cell")) pop.hidden=true; });
+renderGym();
 
 /* ================= Hintergrund: animierte Dot-Welle ================= */
 (function(){
