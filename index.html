@@ -327,9 +327,10 @@
   .gym-left{flex:1;min-width:0}
   .gym-right{width:300px;flex:none;display:flex;flex-direction:column;gap:14px}
   @media(max-width:920px){.gym-right{width:100%}}
-  .gym-dow,.gym-grid{display:grid;grid-template-columns:repeat(7,24px);gap:5px}
-  .gym-dow{margin-bottom:6px}
-  .gym-dow span{font-size:10px;color:var(--muted);text-align:center;text-transform:uppercase;letter-spacing:.5px}
+  .gym-cal{display:flex;gap:7px;align-items:flex-start}
+  .gym-dow{display:grid;grid-template-rows:repeat(7,24px);gap:5px;flex:none}
+  .gym-dow span{font-size:9px;color:var(--muted);display:flex;align-items:center;justify-content:flex-end;text-transform:uppercase}
+  .gym-grid{display:grid;grid-template-rows:repeat(7,24px);grid-auto-flow:column;grid-auto-columns:24px;gap:5px;flex:1;min-width:0;overflow-x:auto;padding-bottom:3px}
   .gym-cell{width:24px;height:24px;border-radius:5px;background:var(--g-rest);border:1px solid var(--line);cursor:pointer;position:relative;transition:transform .1s}
   .gym-cell:hover{transform:scale(1.1)}
   .gym-cell.push{background:var(--g-push);border-color:var(--g-push)}
@@ -479,8 +480,10 @@
     </div>
     <div class="gym-body">
       <div class="gym-left">
-        <div class="gym-dow"><span>Mo</span><span>Di</span><span>Mi</span><span>Do</span><span>Fr</span><span>Sa</span><span>So</span></div>
-        <div class="gym-grid" id="gymGrid"></div>
+        <div class="gym-cal">
+          <div class="gym-dow"><span>Mo</span><span>Di</span><span>Mi</span><span>Do</span><span>Fr</span><span>Sa</span><span>So</span></div>
+          <div class="gym-grid" id="gymGrid"></div>
+        </div>
         <div class="gym-legend">
           <span><i class="sw push"></i>Push</span><span><i class="sw pull"></i>Pull</span>
           <span><i class="sw leg"></i>Leg</span><span><i class="sw cardio"></i>Cardio</span>
@@ -1095,11 +1098,15 @@ function gymRangeStart(today){
   if(gymTf==="month") return new Date(today.getFullYear(),today.getMonth(),1);
   return new Date(today.getTime()-89*864e5);
 }
+function gymRangeEnd(today){
+  if(gymTf==="month"){ const last=new Date(today.getFullYear(),today.getMonth()+1,0); const e=gymMonday(last); e.setDate(e.getDate()+6); return e; }
+  const e=gymMonday(today); e.setDate(e.getDate()+6); return e;   // Sonntag dieser Woche
+}
 function renderGym(){
   if(!$("gymGrid")) return;
   const today=new Date(); today.setHours(0,0,0,0); const tk=todayKey(today);
   const start=gymRangeStart(today), gridStart=gymMonday(start);
-  const gridEnd=gymMonday(today); gridEnd.setDate(gridEnd.getDate()+6);
+  const gridEnd=gymRangeEnd(today);
   let html="";
   for(let d=new Date(gridStart); d<=gridEnd; d.setDate(d.getDate()+1)){
     const k=todayKey(d), type=CACHE.gym[k]||"rest";
@@ -1158,7 +1165,7 @@ renderGym();
 /* TEMP: Viewport-Anzeige fürs Tablet-Tuning — wird danach wieder entfernt */
 (function(){
   const e=document.createElement("div");
-  e.style.cssText="position:fixed;left:10px;bottom:10px;z-index:200;background:#000;color:#c8f92e;font:700 14px Inter,sans-serif;padding:8px 13px;border:1px solid #c8f92e;border-radius:9px;pointer-events:none";
+  e.style.cssText="position:fixed;left:50%;top:8px;transform:translateX(-50%);z-index:9999;background:#000;color:#c8f92e;font:800 18px Inter,sans-serif;padding:10px 18px;border:2px solid #c8f92e;border-radius:11px;pointer-events:none";
   document.body.appendChild(e);
   const u=()=>{ e.textContent="Viewport "+window.innerWidth+" × "+window.innerHeight; };
   u(); window.addEventListener("resize",u);
