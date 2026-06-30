@@ -1155,6 +1155,15 @@ $("gymPop").querySelectorAll("button").forEach(b=>b.onclick=()=>{ setGym($("gymP
 document.addEventListener("click", e=>{ const pop=$("gymPop"); if(!pop.hidden && !pop.contains(e.target) && !e.target.closest(".gym-cell")) pop.hidden=true; });
 renderGym();
 
+/* TEMP: Viewport-Anzeige fürs Tablet-Tuning — wird danach wieder entfernt */
+(function(){
+  const e=document.createElement("div");
+  e.style.cssText="position:fixed;left:10px;bottom:10px;z-index:200;background:#000;color:#c8f92e;font:700 14px Inter,sans-serif;padding:8px 13px;border:1px solid #c8f92e;border-radius:9px;pointer-events:none";
+  document.body.appendChild(e);
+  const u=()=>{ e.textContent="Viewport "+window.innerWidth+" × "+window.innerHeight; };
+  u(); window.addEventListener("resize",u);
+})();
+
 /* ================= Hintergrund: animierte Dot-Welle ================= */
 (function(){
   const cv=$("bg"); if(!cv) return;
