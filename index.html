@@ -1087,9 +1087,9 @@ loadJunia(); setInterval(loadJunia, 10*60*1000);
 
 /* ================= GYM ================= */
 let gymTf="week";
-const GYM_SCHEDULE={  // Wochentag 0=So..6=Sa. Öffnungszeiten = Platzhalter, Julian füllt sie.
-  1:{depart:"20:45",open:"—"}, 2:{depart:"20:45",open:"—"}, 3:{depart:"20:45",open:"—"},
-  4:{depart:"20:45",open:"—"}, 5:{depart:"19:45",open:"—"}, 6:{depart:"—",open:"—"}, 0:{depart:"—",open:"—"}
+const GYM_SCHEDULE={  // Wochentag 0=So..6=Sa. Abfahrt = Schluss - 1:15.
+  1:{depart:"20:45",open:"08:00–22:00"}, 2:{depart:"20:45",open:"08:00–22:00"}, 3:{depart:"20:45",open:"08:00–22:00"},
+  4:{depart:"20:45",open:"08:00–22:00"}, 5:{depart:"19:45",open:"08:00–21:00"}, 6:{depart:"16:45",open:"10:00–18:00"}, 0:{depart:"14:45",open:"09:00–16:00"}
 };
 const GYM_TYPES=["push","pull","leg","cardio"];
 const GYM_COL={push:"var(--g-push)",pull:"var(--g-pull)",leg:"var(--g-leg)",cardio:"var(--g-cardio)"};
