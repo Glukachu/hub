@@ -25,11 +25,11 @@
   *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
   html,body{background:var(--bg);color:var(--txt);font-family:"Inter",system-ui,sans-serif;
     -webkit-font-smoothing:antialiased;min-height:100%}
-  body{padding:26px 26px 60px}
+  body{padding:0;height:100vh;overflow:hidden}
   .head{font-family:"Anton",sans-serif;text-transform:uppercase;letter-spacing:.5px}
 
   #bg{position:fixed;inset:0;z-index:0;pointer-events:none}
-  .app{max-width:1380px;margin:0 auto;position:relative;z-index:1}
+  .app{position:relative;z-index:1;height:100vh;display:flex;flex-direction:column;gap:15px;padding:15px 24px 18px}
   #loginOverlay{position:fixed;inset:0;z-index:200;background:var(--bg);display:flex;align-items:center;justify-content:center}
   #loginOverlay[hidden]{display:none}
   #migrateBtn{position:fixed;top:14px;left:50%;transform:translateX(-50%);z-index:80;
@@ -46,7 +46,7 @@
   .login-err{color:var(--danger);font-size:12px;margin-top:8px;min-height:14px}
 
   /* Topbar */
-  .top{display:flex;align-items:flex-end;justify-content:space-between;margin-bottom:22px;flex-wrap:wrap;gap:14px}
+  .top{display:flex;align-items:flex-end;justify-content:space-between;flex:none;flex-wrap:wrap;gap:14px}
   .brand{display:flex;align-items:baseline;gap:14px}
   .brand .logo{font-family:"Anton";font-size:38px;letter-spacing:1px}
   .brand .logo b{color:var(--accent)}
@@ -57,11 +57,16 @@
   .greet .clock{font-family:"Anton";font-size:30px;color:var(--accent);line-height:1;margin-top:2px}
 
   /* Grid */
-  .grid{display:grid;grid-template-columns:330px 1fr 350px;gap:20px;align-items:start}
-  @media(max-width:1120px){.grid{grid-template-columns:1fr}}
-  .col-left{display:flex;flex-direction:column;gap:20px;min-width:0}
+  .dash{flex:1;min-height:0;display:grid;gap:15px;
+    grid-template-columns:1fr 1fr 1.4fr 1.2fr;grid-template-rows:1fr 1fr;
+    grid-template-areas:"schlaf fokus tasks junia" "gym gym tasks junia"}
+  #sleepCard{grid-area:schlaf} #focusCard{grid-area:fokus}
+  #tasksCard{grid-area:tasks} #juniaCard{grid-area:junia} #gymCard{grid-area:gym;overflow:visible}
+  #sleepBody{flex:1;min-height:0;overflow-y:auto}
+  @media(max-width:820px){ .dash{grid-template-columns:1fr 1fr;grid-template-rows:none;grid-auto-rows:minmax(190px,auto);
+    grid-template-areas:"schlaf fokus" "tasks tasks" "junia junia" "gym gym";overflow-y:auto} }
 
-  .card{background:var(--panel);border:1px solid var(--line);border-radius:18px;padding:20px}
+  .card{background:var(--panel);border:1px solid var(--line);border-radius:18px;padding:20px;display:flex;flex-direction:column;overflow:hidden;min-height:0}
   .card h2{font-family:"Anton";font-size:14px;letter-spacing:2px;text-transform:uppercase;
     color:var(--muted);margin-bottom:16px;display:flex;align-items:center;gap:9px}
   .card h2 .bar{width:18px;height:3px;background:var(--accent);border-radius:2px}
@@ -136,7 +141,7 @@
   .add-row input:focus{outline:none;border-color:var(--accent)}
   .add-row button{background:var(--accent);color:#0b0b0b;border:none;font-weight:700;padding:0 16px;border-radius:11px;cursor:pointer}
 
-  .tlist{display:flex;flex-direction:column;gap:9px;min-height:90px}
+  .tlist{display:flex;flex-direction:column;gap:9px;flex:1;min-height:0;overflow-y:auto}
   .task{display:flex;align-items:flex-start;gap:12px;background:var(--panel2);border:1px solid var(--line);
     border-left:3px solid var(--line);border-radius:12px;padding:13px 14px;transition:border-color .15s}
   .task:hover{border-left-color:var(--accent)}
@@ -192,7 +197,7 @@
 
   /* ---- Junia ---- */
   .javatar{width:24px;height:24px;border-radius:50%;object-fit:cover;border:1px solid var(--line)}
-  .junia-msg{font-size:14px;line-height:1.55;margin-bottom:16px;white-space:pre-line}
+  .junia-msg{font-size:14px;line-height:1.55;margin-bottom:16px;white-space:pre-line;flex:1;min-height:0;overflow-y:auto}
   .jrow{display:flex;align-items:center;gap:10px;background:var(--panel2);border-radius:10px;
     padding:8px 11px;margin-bottom:7px;border-left:3px solid var(--line)}
   .jrow .h{font-weight:700;color:var(--muted);width:22px;text-align:center}
@@ -316,13 +321,13 @@
     opacity:0;transform:translateY(5px);transition:opacity .25s,transform .25s;pointer-events:none}
   .buddy .bubble.show{opacity:1;transform:translateY(0)}
   /* ================= GYM ================= */
-  .gymcard{margin-top:20px;position:relative}
+  .gymcard{position:relative}
   .gym-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:18px;gap:14px;flex-wrap:wrap}
   .gym-head h2{margin-bottom:0}
   .gym-tf{display:flex;gap:3px;background:var(--panel2);border:1px solid var(--line);border-radius:10px;padding:3px}
   .gym-tf button{background:none;border:none;color:var(--muted);font-family:"Inter";font-size:12px;font-weight:600;padding:6px 13px;border-radius:8px;cursor:pointer}
   .gym-tf button.on{background:var(--accent);color:#0b0b0b}
-  .gym-body{display:flex;gap:30px;align-items:flex-start}
+  .gym-body{display:flex;gap:30px;align-items:flex-start;flex:1;min-height:0;overflow:auto}
   @media(max-width:920px){.gym-body{flex-direction:column}}
   .gym-left{flex:1;min-width:0}
   .gym-right{width:300px;flex:none;display:flex;flex-direction:column;gap:14px}
@@ -409,26 +414,23 @@
     </div>
   </div>
 
-  <div class="grid">
+  <div class="dash">
 
-    <!-- ============ LINKE SPALTE: SCHLAF + FOKUS ============ -->
-    <div class="col-left">
-      <div class="card" id="sleepCard">
-        <h2><span class="bar"></span>Schlaf</h2>
-        <div id="sleepBody"><!-- gefüllt per JS --></div>
+    <div class="card" id="sleepCard">
+      <h2><span class="bar"></span>Schlaf</h2>
+      <div id="sleepBody"><!-- gefüllt per JS --></div>
+    </div>
+    <div class="card" id="focusCard">
+      <h2><span class="bar"></span>Fokus</h2>
+      <div class="sleep-sum">
+        <div class="dur" id="focusTodayBig">0<small>m</small></div>
+        <div class="meta">heute fokussiert</div>
       </div>
-      <div class="card" id="focusCard">
-        <h2><span class="bar"></span>Fokus</h2>
-        <div class="sleep-sum">
-          <div class="dur" id="focusTodayBig">0<small>m</small></div>
-          <div class="meta">heute fokussiert</div>
-        </div>
-        <div class="sleep-hist static" id="focusHist"></div>
-      </div>
+      <div class="sleep-hist static" id="focusHist"></div>
     </div>
 
     <!-- ============ HARD TASKS ============ -->
-    <div class="card">
+    <div class="card" id="tasksCard">
       <div class="tasks-head">
         <h2><span class="bar"></span>Hard Tasks</h2>
         <button class="add-btn" id="addBtn" title="Task hinzufügen">+</button>
@@ -455,7 +457,7 @@
     </div>
 
     <!-- ============ JUNIA ============ -->
-    <div class="card">
+    <div class="card" id="juniaCard">
       <h2><span class="bar"></span><img class="javatar" src="data/junia_avatar.jpg" alt="" onerror="this.style.display='none'">Junia</h2>
       <div class="junia-msg" id="jmsg">verbinde…</div>
       <div id="jrows"></div>
@@ -466,10 +468,8 @@
       <div class="jstatus"><span class="dot off" id="jdot"></span><span id="jupdated">keine junia.json</span></div>
     </div>
 
-  </div>
-
-  <!-- ============ GYM ============ -->
-  <div class="card gymcard" id="gymCard">
+    <!-- ============ GYM ============ -->
+    <div class="card gymcard" id="gymCard">
     <div class="gym-head">
       <h2><span class="bar"></span>Gym</h2>
       <div class="gym-tf" id="gymTf">
@@ -504,6 +504,7 @@
       <button data-t="leg"><span class="pd" style="background:var(--g-leg)"></span>Leg</button>
       <button data-t="cardio"><span class="pd" style="background:var(--g-cardio)"></span>Cardio</button>
       <button data-t="rest"><span class="pd" style="background:var(--g-rest)"></span>Rest</button>
+    </div>
     </div>
   </div>
 </div>
@@ -1149,7 +1150,10 @@ function openGymPop(cell, k){
   const pop=$("gymPop"), cr=$("gymCard").getBoundingClientRect(), r=cell.getBoundingClientRect();
   pop.dataset.k=k; pop.hidden=false;
   const left=r.left-cr.left; pop.style.left=left+"px"; pop.style.top=(r.bottom-cr.top+5)+"px";
-  requestAnimationFrame(()=>{ const pr=pop.getBoundingClientRect(); if(pr.right>innerWidth-8) pop.style.left=(left-(pr.right-innerWidth+8))+"px"; });
+  requestAnimationFrame(()=>{ const pr=pop.getBoundingClientRect();
+    if(pr.right>innerWidth-8) pop.style.left=(left-(pr.right-innerWidth+8))+"px";
+    if(pr.bottom>innerHeight-8) pop.style.top=(r.top-cr.top-pr.height-5)+"px";   // nach oben klappen
+  });
 }
 function setGym(k, type){
   if(type==="rest") delete CACHE.gym[k]; else CACHE.gym[k]=type;
@@ -1161,15 +1165,6 @@ $("gymTf").querySelectorAll("button").forEach(b=>b.onclick=()=>{
 $("gymPop").querySelectorAll("button").forEach(b=>b.onclick=()=>{ setGym($("gymPop").dataset.k, b.dataset.t); $("gymPop").hidden=true; });
 document.addEventListener("click", e=>{ const pop=$("gymPop"); if(!pop.hidden && !pop.contains(e.target) && !e.target.closest(".gym-cell")) pop.hidden=true; });
 renderGym();
-
-/* TEMP: Viewport-Anzeige fürs Tablet-Tuning — wird danach wieder entfernt */
-(function(){
-  const e=document.createElement("div");
-  e.style.cssText="position:fixed;left:50%;top:8px;transform:translateX(-50%);z-index:9999;background:#000;color:#c8f92e;font:800 18px Inter,sans-serif;padding:10px 18px;border:2px solid #c8f92e;border-radius:11px;pointer-events:none";
-  document.body.appendChild(e);
-  const u=()=>{ e.textContent="Viewport "+window.innerWidth+" × "+window.innerHeight; };
-  u(); window.addEventListener("resize",u);
-})();
 
 /* ================= Hintergrund: animierte Dot-Welle ================= */
 (function(){
