@@ -55,6 +55,10 @@
   .greet .hi{font-size:20px;font-weight:600}
   .greet .date{font-size:13px;color:var(--muted);margin-top:3px}
   .greet .clock{font-family:"Anton";font-size:30px;color:var(--accent);line-height:1;margin-top:2px}
+  .syncstate{display:flex;align-items:center;gap:7px;font-size:10px;letter-spacing:1px;
+    text-transform:uppercase;font-weight:700;color:var(--danger)}
+  .syncstate .sdot{width:8px;height:8px;border-radius:50%;background:var(--accent)}
+  .syncstate .sdot.bad{background:var(--danger);animation:fbpulse 1.4s ease-in-out infinite}
 
   /* Grid */
   .dash{flex:1;min-height:0;display:grid;gap:15px;
@@ -406,6 +410,7 @@
   <div class="top">
     <div class="brand">
       <span class="logo">PRODUCTIVITY <b>HUB</b></span>
+      <span class="syncstate" id="syncState" title="Cloud-Sync"><span class="sdot" id="syncDot"></span><span id="syncTxt"></span></span>
     </div>
     <div class="greet">
       <div class="hi" id="hi">—</div>
@@ -542,8 +547,18 @@ const db = firebase.firestore();
 db.enablePersistence({synchronizeTabs:true}).catch(()=>{});   // Offline-Cache
 const STATE_REF = db.collection("state").doc("main");
 const CACHE = { tasks:[], sleep:{}, focus:null, daily:{}, imported:[], junia:null, gym:{} };
+/* Sync-Status: grün = letzter Server-Ack ok, rot = Write/Read fehlgeschlagen.
+   (Offline bleibt der Dot beim letzten Stand — Writes sind dann nur gequeued, kein Fehler.) */
+function setSync(ok, detail){
+  const d=$("syncDot"), t=$("syncTxt"); if(!d) return;
+  d.classList.toggle("bad", !ok);
+  t.textContent = ok ? "" : "Sync-Fehler";
+  $("syncState").title = ok ? "Cloud-Sync ok" : "Cloud-Sync fehlgeschlagen: "+(detail||"unbekannt");
+}
 function pushField(field, value){
-  STATE_REF.set({ [field]: (value===undefined?null:value) }, { merge:true }).catch(e=>console.warn("fb push", field, e));
+  STATE_REF.set({ [field]: (value===undefined?null:value) }, { merge:true })
+    .then(()=>setSync(true))
+    .catch(e=>{ console.warn("fb push", field, e); setSync(false, e.code||e.message); });
 }
 function applyState(d){
   d=d||{};
@@ -554,8 +569,8 @@ function applyState(d){
 let fbStarted=false, syncStarted=false;
 function startSync(){
   if(syncStarted) return; syncStarted=true;
-  STATE_REF.onSnapshot(snap=>{ applyState(snap.data()); if(!fbStarted){ fbStarted=true; importInbox(); checkMigrate(); } },
-    err=>console.warn("fb snapshot", err));
+  STATE_REF.onSnapshot(snap=>{ setSync(true); applyState(snap.data()); if(!fbStarted){ fbStarted=true; importInbox(); checkMigrate(); } },
+    err=>{ console.warn("fb snapshot", err); setSync(false, err.code||err.message); });
 }
 /* ===== Auth-Gate (Login davor) ===== */
 const auth = firebase.auth();
@@ -570,13 +585,13 @@ function hubLogin(){
   err.textContent="";
   if(!email||!pw){ err.textContent="E-Mail und Passwort eingeben."; return; }
   $("loginBtn").disabled=true;
+  // Kein Auto-Signup mehr: das Konto existiert. Tippfehler -> klare Meldung statt leerem Zweitkonto.
   auth.signInWithEmailAndPassword(email,pw)
     .catch(e=>{
-      if(["auth/user-not-found","auth/invalid-credential","auth/invalid-login-credentials","auth/wrong-password"].includes(e.code)){
-        return auth.createUserWithEmailAndPassword(email,pw)   // erstes Mal -> Konto anlegen
-          .catch(e2=>{ err.textContent = e2.code==="auth/email-already-in-use" ? "Falsches Passwort." : (e2.message||"Fehler"); });
-      }
-      err.textContent=e.message||"Fehler";
+      const M={"auth/invalid-credential":"E-Mail oder Passwort falsch.","auth/invalid-login-credentials":"E-Mail oder Passwort falsch.",
+               "auth/wrong-password":"Passwort falsch.","auth/user-not-found":"Kein Konto mit dieser E-Mail.",
+               "auth/invalid-email":"Ungültige E-Mail.","auth/too-many-requests":"Zu viele Versuche — kurz warten."};
+      err.textContent=M[e.code]||e.message||"Fehler";
     })
     .finally(()=>{ $("loginBtn").disabled=false; });
 }

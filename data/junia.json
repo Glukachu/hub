@@ -1,4 +1,5 @@
 {
-  "message": "☀️ Guten Morgen, Julian!\nMontag, 29.06.2026\n\n☁️ Wetter Meckenheim\nbedeckt, jetzt 25° · heute 19–26°\n🌂 79% Regen – Schirm/Jacke\n\n📚 Schule heute\n🌅 Montag, 29.06.2026 (Woche B)\n(kein Abend-Vergleich vorhanden)\n\nMontag, 29.06.2026 (Woche B)\n🏠 1. Std · Erziehungswissenschaften (HNS): EVA - frei, Aufgaben über Teams – Raum IA04\n\nDienstag, 30.06.2026 (Woche B)\n🏠 3.-4. Std · Erziehungswissenschaften (HNS): EVA - frei, Aufgaben über Teams – Raum IA04\n\n💬 You worry too much for someone who figures it out every time.",
-  "updated": "2026-06-29T20:49:54"
+  "_comment": "Nur generischer Fallback. Das echte Briefing kommt privat aus Firestore (state/main.junia) - hier NIE echte Stundenplan-Daten committen (public repo!).",
+  "message": "",
+  "updated": null
 }
